@@ -1,3 +1,5 @@
+import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   RefreshControl,
@@ -62,15 +64,21 @@ export default function ScoresScreen() {
             refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor={colors.primary}
+            // Evita que el spinner se esconda detrás del BlurView
+            progressViewOffset={60} 
           />
         }
+        // El índice 0 es nuestro BlurView, lo hacemos pegajoso
         stickyHeaderIndices={[0]}
       >
-        <View
-          style={{
-            backgroundColor: colors.background,
-            paddingVertical: 12,
-          }}
+        {/* 1. EFECTO CRISTAL EN LOS FILTROS */}
+        <BlurView
+          intensity={80}
+          tint="dark" // Cambia a "light" si tu app no es siempre oscura
+          style={[
+            styles.stickyHeader,
+            { borderBottomColor: colors.border }
+          ]}
         >
           <ScrollView
             horizontal
@@ -87,58 +95,106 @@ export default function ScoresScreen() {
               />
             ))}
           </ScrollView>
+        </BlurView>
+
+        {/* 2. SECCIONES CON MEJOR ESPACIADO */}
+        <View style={styles.content}>
+          {live.length > 0 && (
+            <View style={styles.section}>
+              <SectionHeader title="En vivo" accent={colors.live} />
+              {live.map((m) => (
+                <MatchCard
+                  key={m.id}
+                  match={m}
+                  flashKey={flashKeys[m.id]}
+                />
+              ))}
+            </View>
+          )}
+
+          {upcoming.length > 0 && (
+            <View style={styles.section}>
+              <SectionHeader title="Próximos" accent={colors.accent} />
+              {upcoming.map((m) => (
+                <MatchCard key={m.id} match={m} />
+              ))}
+            </View>
+          )}
+
+          {finals.length > 0 && (
+            <View style={styles.section}>
+              <SectionHeader title="Finales" accent={colors.mutedForeground} />
+              {finals.map((m) => (
+                <MatchCard key={m.id} match={m} />
+              ))}
+            </View>
+          )}
+
+          {/* 3. ESTADO VACÍO (EMPTY STATE) MODERNO */}
+          {filtered.length === 0 && (
+            <View style={styles.empty}>
+              <View style={[styles.emptyIconCircle, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Feather name="calendar" size={32} color={colors.mutedForeground} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+                Día de descanso
+              </Text>
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                No hay encuentros programados para esta categoría en este momento.
+              </Text>
+            </View>
+          )}
         </View>
-
-        {live.length > 0 ? (
-          <>
-            <SectionHeader title="En vivo" accent={colors.live} />
-            {live.map((m) => (
-              <MatchCard
-                key={m.id}
-                match={m}
-                flashKey={flashKeys[m.id]}
-              />
-            ))}
-          </>
-        ) : null}
-
-        {upcoming.length > 0 ? (
-          <>
-            <SectionHeader title="Próximos" accent={colors.accent} />
-            {upcoming.map((m) => (
-              <MatchCard key={m.id} match={m} />
-            ))}
-          </>
-        ) : null}
-
-        {finals.length > 0 ? (
-          <>
-            <SectionHeader title="Finales" accent={colors.mutedForeground} />
-            {finals.map((m) => (
-              <MatchCard key={m.id} match={m} />
-            ))}
-          </>
-        ) : null}
-
-        {filtered.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              No hay encuentros para este deporte ahora mismo.
-            </Text>
-          </View>
-        ) : null}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  filters: { paddingHorizontal: 18 },
-  empty: { padding: 40, alignItems: "center" },
+  container: { 
+    flex: 1 
+  },
+  stickyHeader: {
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    // Un color base muy transparente por si el blur tarda en cargar
+    backgroundColor: "rgba(0,0,0,0.4)", 
+  },
+  filters: { 
+    paddingHorizontal: 18,
+    gap: 8 // Da una separación perfecta entre píldoras si React Native soporta gap aquí, o el SportPill ya tiene margen
+  },
+  content: {
+    paddingTop: 8, // Espacio después de los filtros
+  },
+  section: {
+    marginBottom: 16, // Separación clara entre En Vivo, Próximos y Finales
+  },
+  empty: { 
+    padding: 40, 
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 40,
+  },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  emptyTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 18,
+    marginBottom: 8,
+  },
   emptyText: {
     fontFamily: "Inter_500Medium",
     fontSize: 14,
     textAlign: "center",
+    lineHeight: 20,
+    paddingHorizontal: 20,
   },
 });

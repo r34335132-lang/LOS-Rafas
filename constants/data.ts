@@ -45,6 +45,30 @@ export const SPORTS: Sport[] = [
   },
 ];
 
+export type PlayerStats = {
+  // Flag Football
+  touchdowns?: number;
+  yards?: number;
+  interceptions?: number;
+  // Soccer
+  goals?: number;
+  assists?: number;
+  yellowCards?: number;
+  // Basketball
+  pointsPerGame?: number;
+  rebounds?: number;
+  assistsBb?: number;
+};
+
+export type Player = {
+  id: string;
+  name: string;
+  position: string;
+  number: number;
+  image: string;
+  stats: PlayerStats;
+};
+
 export type Team = {
   id: string;
   name: string;
@@ -56,7 +80,7 @@ export type Team = {
   wins: number;
   losses: number;
   ties: number;
-  players: { name: string; position: string; number: number }[];
+  players: Player[];
   recent: { opponent: string; result: "W" | "L" | "T"; score: string }[];
 };
 
@@ -73,11 +97,11 @@ export const TEAMS: Team[] = [
     losses: 2,
     ties: 0,
     players: [
-      { name: "Diego Ramírez", position: "QB", number: 7 },
-      { name: "Ángel Soto", position: "WR", number: 11 },
-      { name: "Mateo Vega", position: "RB", number: 22 },
-      { name: "Iván Estrada", position: "LB", number: 55 },
-      { name: "Luis Cárdenas", position: "DB", number: 24 },
+      { id: "p1", name: "Diego Ramírez", position: "QB", number: 7, image: "https://i.pravatar.cc/150?u=diego", stats: { touchdowns: 18, yards: 1250, interceptions: 2 } },
+      { id: "p2", name: "Angel Gonzalez", position: "WR", number: 11, image: "https://i.pravatar.cc/150?u=angel", stats: { touchdowns: 12, yards: 890 } },
+      { id: "p3", name: "Mateo Vega", position: "RB", number: 22, image: "https://i.pravatar.cc/150?u=mateo", stats: { touchdowns: 5, yards: 450 } },
+      { id: "p4", name: "Iván Estrada", position: "LB", number: 55, image: "https://i.pravatar.cc/150?u=ivan", stats: { interceptions: 4 } },
+      { id: "p5", name: "Luis Cárdenas", position: "DB", number: 24, image: "https://i.pravatar.cc/150?u=luis", stats: { interceptions: 6 } },
     ],
     recent: [
       { opponent: "Halcones FC", result: "W", score: "28-14" },
@@ -97,11 +121,11 @@ export const TEAMS: Team[] = [
     losses: 4,
     ties: 3,
     players: [
-      { name: "Carlos Méndez", position: "POR", number: 1 },
-      { name: "Bruno Tavares", position: "DEF", number: 4 },
-      { name: "Hugo Rentería", position: "MED", number: 8 },
-      { name: "Sergio Lara", position: "DEL", number: 9 },
-      { name: "Pablo Ortiz", position: "DEL", number: 10 },
+      { id: "p6", name: "Carlos Méndez", position: "POR", number: 1, image: "https://i.pravatar.cc/150?u=carlos", stats: { yellowCards: 1 } },
+      { id: "p7", name: "Bruno Tavares", position: "DEF", number: 4, image: "https://i.pravatar.cc/150?u=bruno", stats: { goals: 2, yellowCards: 4 } },
+      { id: "p8", name: "Hugo Rentería", position: "MED", number: 8, image: "https://i.pravatar.cc/150?u=hugo", stats: { goals: 4, assists: 8 } },
+      { id: "p9", name: "Sergio Lara", position: "DEL", number: 9, image: "https://i.pravatar.cc/150?u=sergio", stats: { goals: 14, assists: 2 } },
+      { id: "p10", name: "Pablo Ortiz", position: "DEL", number: 10, image: "https://i.pravatar.cc/150?u=pablo", stats: { goals: 9, assists: 6 } },
     ],
     recent: [
       { opponent: "Mineros JR", result: "W", score: "3-1" },
@@ -121,11 +145,11 @@ export const TEAMS: Team[] = [
     losses: 6,
     ties: 0,
     players: [
-      { name: "Jorge Pineda", position: "PG", number: 3 },
-      { name: "Andrés Quiroz", position: "SG", number: 14 },
-      { name: "Tomás Bravo", position: "SF", number: 21 },
-      { name: "Iker Salinas", position: "PF", number: 32 },
-      { name: "Marco Téllez", position: "C", number: 50 },
+      { id: "p11", name: "Jorge Pineda", position: "PG", number: 3, image: "https://i.pravatar.cc/150?u=jorge", stats: { pointsPerGame: 22.5, assistsBb: 8.2 } },
+      { id: "p12", name: "Andrés Quiroz", position: "SG", number: 14, image: "https://i.pravatar.cc/150?u=andres", stats: { pointsPerGame: 18.0, rebounds: 4.1 } },
+      { id: "p13", name: "Tomás Bravo", position: "SF", number: 21, image: "https://i.pravatar.cc/150?u=tomas", stats: { pointsPerGame: 14.3, rebounds: 6.5 } },
+      { id: "p14", name: "Iker Salinas", position: "PF", number: 32, image: "https://i.pravatar.cc/150?u=iker", stats: { pointsPerGame: 10.1, rebounds: 9.8 } },
+      { id: "p15", name: "Marco Téllez", position: "C", number: 50, image: "https://i.pravatar.cc/150?u=marco", stats: { pointsPerGame: 16.8, rebounds: 12.4 } },
     ],
     recent: [
       { opponent: "Halcones BBC", result: "W", score: "88-79" },
@@ -145,9 +169,9 @@ export const TEAMS: Team[] = [
     losses: 4,
     ties: 0,
     players: [
-      { name: "Emilio Núñez", position: "QB", number: 12 },
-      { name: "Rafa Cortés", position: "WR", number: 19 },
-      { name: "Alex Vidal", position: "RB", number: 33 },
+      { id: "p16", name: "Emilio Núñez", position: "QB", number: 12, image: "https://i.pravatar.cc/150?u=emilio", stats: { touchdowns: 14, yards: 1100, interceptions: 5 } },
+      { id: "p17", name: "Rafa Cortés", position: "WR", number: 19, image: "https://i.pravatar.cc/150?u=rafa", stats: { touchdowns: 8, yards: 720 } },
+      { id: "p18", name: "Alex Vidal", position: "RB", number: 33, image: "https://i.pravatar.cc/150?u=alex", stats: { touchdowns: 6, yards: 510 } },
     ],
     recent: [
       { opponent: "Pumas de Durango", result: "L", score: "14-28" },
@@ -166,8 +190,8 @@ export const TEAMS: Team[] = [
     losses: 5,
     ties: 4,
     players: [
-      { name: "Raúl Aguilar", position: "POR", number: 1 },
-      { name: "Daniel Pérez", position: "DEL", number: 9 },
+      { id: "p19", name: "Raúl Aguilar", position: "POR", number: 1, image: "https://i.pravatar.cc/150?u=raul", stats: { yellowCards: 0 } },
+      { id: "p20", name: "Daniel Pérez", position: "DEL", number: 9, image: "https://i.pravatar.cc/150?u=daniel", stats: { goals: 11, assists: 3 } },
     ],
     recent: [
       { opponent: "Alacranes FC", result: "T", score: "2-2" },
@@ -186,8 +210,8 @@ export const TEAMS: Team[] = [
     losses: 0,
     ties: 0,
     players: [
-      { name: "Sofía Bañuelos", position: "RX", number: 1 },
-      { name: "Karla Mejía", position: "RX", number: 2 },
+      { id: "p21", name: "Sofía Bañuelos", position: "RX", number: 1, image: "https://i.pravatar.cc/150?u=sofia", stats: {} },
+      { id: "p22", name: "Karla Mejía", position: "RX", number: 2, image: "https://i.pravatar.cc/150?u=karla", stats: {} },
     ],
     recent: [],
   },
@@ -292,7 +316,7 @@ export const NEWS: NewsItem[] = [
     title: "Pumas se imponen en el clásico de Flag Football",
     excerpt:
       "Diego Ramírez lanza para 3 anotaciones y los Pumas vencen a Halcones 28-14.",
-    body: "En una noche eléctrica en el Estadio Francisco Villa, los Pumas de Durango lograron una victoria contundente sobre los Halcones FC con marcador final de 28-14. El mariscal Diego Ramírez fue la figura del encuentro al conectar tres pases de anotación, dos de ellos hacia el receptor Ángel Soto. La defensiva, comandada por Iván Estrada, forzó tres pérdidas de balón claves. Con este resultado, los Pumas amplían su racha ganadora a cinco partidos y se colocan como líderes solitarios de la conferencia norte de la liga local.",
+    body: "En una noche eléctrica en el Estadio Francisco Villa, los Pumas de Durango lograron una victoria contundente sobre los Halcones FC con marcador final de 28-14. El mariscal Diego Ramírez fue la figura del encuentro al conectar tres pases de anotación, dos de ellos hacia el receptor Angel Gonzalez. La defensiva, comandada por Iván Estrada, forzó tres pérdidas de balón claves. Con este resultado, los Pumas amplían su racha ganadora a cinco partidos y se colocan como líderes solitarios de la conferencia norte de la liga local.",
     sport: "flag",
     author: "Redacción Rugido",
     publishedAt: "Hace 2 h",
@@ -344,10 +368,10 @@ export const NEWS: NewsItem[] = [
   },
   {
     id: "n6",
-    title: "Ángel Soto, la nueva sensación del receptor durangueño",
+    title: "Angel Gonzalez, la nueva sensación del receptor durangueño",
     excerpt:
       "El receptor de 22 años promedia 2 anotaciones por partido esta temporada.",
-    body: "Con apenas 22 años, Ángel Soto se ha convertido en la principal arma ofensiva de los Pumas de Durango. El receptor sumó otra noche brillante con 142 yardas y dos anotaciones frente a Halcones, llevando su total temporal a 18 touchdowns en sólo nueve juegos. Cazatalentos de la liga estatal ya han iniciado conversaciones con su representante.",
+    body: "Con apenas 22 años, Angel Gonzalez se ha convertido en la principal arma ofensiva de los Pumas de Durango. El receptor sumó otra noche brillante con 142 yardas y dos anotaciones frente a Halcones, llevando su total temporal a 18 touchdowns en sólo nueve juegos. Cazatalentos de la liga estatal ya han iniciado conversaciones con su representante.",
     sport: "flag",
     author: "Redacción Rugido",
     publishedAt: "Hace 3 h",
@@ -362,3 +386,39 @@ export const TICKER_ITEMS = [
   "FINAL · LOB 92 — HAL 88",
   "PROX · CIE vs ALA · Sáb 19:00",
 ];
+
+export type LeaderboardEntry = {
+  player: Player;
+  teamShort: string;
+  teamColor: string;
+  statValue: number | string;
+};
+
+export const LEADERBOARDS = {
+  soccer: {
+    title: "Tabla de Goleo",
+    statLabel: "GOLES",
+    leaders: [
+      { player: TEAMS.find(t => t.id === "alacranes-fc")!.players.find(p => p.name === "Sergio Lara")!, teamShort: "ALA", teamColor: "#E10600", statValue: 14 },
+      { player: TEAMS.find(t => t.id === "ciervos-durango")!.players.find(p => p.name === "Daniel Pérez")!, teamShort: "CIE", teamColor: "#00C853", statValue: 11 },
+      { player: TEAMS.find(t => t.id === "alacranes-fc")!.players.find(p => p.name === "Pablo Ortiz")!, teamShort: "ALA", teamColor: "#E10600", statValue: 9 },
+    ] as LeaderboardEntry[]
+  },
+  flag: {
+    title: "Líderes de Yardas (Pase)",
+    statLabel: "YARDAS",
+    leaders: [
+      { player: TEAMS.find(t => t.id === "pumas-durango")!.players.find(p => p.name === "Diego Ramírez")!, teamShort: "PUM", teamColor: "#FF6A00", statValue: 1250 },
+      { player: TEAMS.find(t => t.id === "halcones-fc")!.players.find(p => p.name === "Emilio Núñez")!, teamShort: "HAL", teamColor: "#FFD600", statValue: 1100 },
+    ] as LeaderboardEntry[]
+  },
+  basketball: {
+    title: "Puntos por Partido",
+    statLabel: "PPP",
+    leaders: [
+      { player: TEAMS.find(t => t.id === "lobos-guadiana")!.players.find(p => p.name === "Jorge Pineda")!, teamShort: "LOB", teamColor: "#0057FF", statValue: 22.5 },
+      { player: TEAMS.find(t => t.id === "lobos-guadiana")!.players.find(p => p.name === "Andrés Quiroz")!, teamShort: "LOB", teamColor: "#0057FF", statValue: 18.0 },
+      { player: TEAMS.find(t => t.id === "lobos-guadiana")!.players.find(p => p.name === "Marco Téllez")!, teamShort: "LOB", teamColor: "#0057FF", statValue: 16.8 },
+    ] as LeaderboardEntry[]
+  }
+};

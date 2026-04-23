@@ -1,8 +1,7 @@
 import { Feather } from "@expo/vector-icons";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,7 +11,7 @@ import {
 import { AppHeader } from "@/components/AppHeader";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SportPill } from "@/components/SportPill";
-import { TeamBadge } from "@/components/TeamBadge";
+import { StandingsTable } from "@/components/StandingsTable";
 import { SPORTS, SportKey, TEAMS } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 
@@ -87,7 +86,7 @@ export default function SportsScreen() {
           </View>
         </View>
 
-        <SectionHeader title="Equipos" accent={accent} />
+        <SectionHeader title="Tabla de Posiciones" accent={accent} />
 
         {teams.length === 0 ? (
           <View style={styles.empty}>
@@ -96,53 +95,7 @@ export default function SportsScreen() {
             </Text>
           </View>
         ) : (
-          teams.map((team) => (
-            <Pressable
-              key={team.id}
-              onPress={() => router.push(`/team/${team.id}`)}
-              style={({ pressed }) => [
-                styles.teamRow,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                  opacity: pressed ? 0.92 : 1,
-                },
-              ]}
-            >
-              <TeamBadge short={team.short} color={team.colorHex} size={48} />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={[styles.teamName, { color: colors.foreground }]}>
-                  {team.name}
-                </Text>
-                <Text
-                  style={[styles.teamMeta, { color: colors.mutedForeground }]}
-                >
-                  {team.city} · Fund. {team.founded}
-                </Text>
-              </View>
-              <View style={styles.teamStats}>
-                <Text
-                  style={[styles.teamStatBig, { color: colors.foreground }]}
-                >
-                  {team.wins}-{team.losses}
-                  {team.ties ? `-${team.ties}` : ""}
-                </Text>
-                <Text
-                  style={[
-                    styles.teamStatLabel,
-                    { color: colors.mutedForeground },
-                  ]}
-                >
-                  TEMP
-                </Text>
-              </View>
-              <Feather
-                name="chevron-right"
-                size={18}
-                color={colors.mutedForeground}
-              />
-            </Pressable>
-          ))
+          <StandingsTable teams={teams} accentColor={accent} />
         )}
       </ScrollView>
     </View>
@@ -188,34 +141,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-  },
-  teamRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    marginHorizontal: 18,
-    marginBottom: 10,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  teamName: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 15,
-  },
-  teamMeta: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 11,
-  },
-  teamStats: { alignItems: "flex-end", marginRight: 6 },
-  teamStatBig: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 14,
-  },
-  teamStatLabel: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 9,
-    letterSpacing: 0.8,
   },
   empty: { padding: 40, alignItems: "center" },
   emptyText: {
