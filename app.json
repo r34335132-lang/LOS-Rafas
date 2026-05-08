@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "Rugido Deportivo Durango",
-    "slug": "mobile",
+    "slug": "rugido-deportivo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "rugidodeportivo",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -14,21 +14,31 @@
       "backgroundColor": "#0B0B0B"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Necesitamos tu ubicación para trazar tu ruta en el mapa mientras haces ejercicio."
+      }
     },
-    "android": {},
+    "android": {
+      "package": "com.rugidodeportivo.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
-      [
-        "expo-router",
-        {
-          "origin": "https://replit.com/"
-        }
-      ],
+      "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Permite a Rugido Deportivo rastrear tu ruta deportiva."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

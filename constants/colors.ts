@@ -1,7 +1,7 @@
 const palette = {
   red: "#E10600",
   redDark: "#B00400",
-  black: "#0B0B0B",
+  black: "#0B0B0B", // El negro profundo de Roca Sports
   blackElevated: "#151515",
   blackCard: "#1C1C1E",
   white: "#FFFFFF",
@@ -26,7 +26,7 @@ const sharedDark = {
 
   elevated: palette.blackElevated,
 
-  primary: palette.red,
+  primary: palette.red, // Rojo Roca Sports
   primaryForeground: palette.white,
 
   secondary: palette.grayDark,
@@ -53,7 +53,7 @@ const sharedDark = {
 
   // Status
   live: palette.red,
-  liveFlash: palette.yellow,
+  liveFlash: palette.redDark,
 
   // Brand
   brandRed: palette.red,
@@ -62,6 +62,7 @@ const sharedDark = {
 };
 
 const colors = {
+  // Forzamos ambos al dark theme para el look inmersivo
   light: sharedDark,
   dark: sharedDark,
   radius: 14,

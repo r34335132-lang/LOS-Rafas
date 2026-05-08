@@ -1,348 +1,193 @@
 import { Feather } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View, Animated } from "react-native";
 
-import { LiveBadge } from "@/components/LiveBadge";
 import { TeamBadge } from "@/components/TeamBadge";
-import { Match, TEAMS } from "@/constants/data";
+import { TEAMS } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 
-export function MatchCard({
-  match,
-  variant = "row",
-  flashKey,
-}: {
-  match: Match;
-  variant?: "row" | "hero";
+interface MatchCardProps {
+  match: any;
+  variant?: "default" | "hero" | "carousel";
   flashKey?: string | number;
-}) {
+}
+
+export function MatchCard({ match, variant = "default", flashKey }: MatchCardProps) {
+  const router = useRouter();
   const colors = useColors();
-  const home = TEAMS.find((t) => t.id === match.homeId)!;
-  const away = TEAMS.find((t) => t.id === match.awayId)!;
 
-  // Yellow flash animation when scores change
+  const homeTeam = TEAMS.find((t) => t.id === match.homeId);
+  const awayTeam = TEAMS.find((t) => t.id === match.awayId);
+
+  // --- ANIMACIÓN A PRUEBA DE BALAS ---
   const flashAnim = useRef(new Animated.Value(0)).current;
-  const isFirst = useRef(true);
+
   useEffect(() => {
-    if (isFirst.current) {
-      isFirst.current = false;
-      return;
+    if (flashKey) {
+      Animated.sequence([
+        Animated.timing(flashAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: false, // Debe ser false al animar colores
+        }),
+        Animated.timing(flashAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+      ]).start();
     }
-    flashAnim.setValue(1);
-    Animated.timing(flashAnim, {
-      toValue: 0,
-      duration: 900,
-      useNativeDriver: false,
-    }).start();
-  }, [flashKey, flashAnim]);
+  }, [flashKey]);
 
-  const scoreBg = flashAnim.interpolate({
+  // FALLBACKS DE SEGURIDAD (Aquí matamos el error "Invariant Violation")
+  // Si colors.card es undefined, usamos tu negro elevado (#1C1C1E)
+  // Si colors.liveFlash es undefined, usamos tu rojo oscuro (#B00400)
+  const safeCardColor = colors?.card || "#1C1C1E";
+  const safeFlashColor = colors?.liveFlash || "#B00400";
+
+  const animatedBg = flashAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ["transparent", colors.liveFlash],
-  });
-  const scoreColor = flashAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [colors.foreground, "#000"],
+    outputRange: [safeCardColor, safeFlashColor],
   });
 
-  if (variant === "hero") {
-    return (
-      <Pressable
-        onPress={() => router.push(`/team/${home.id}`)}
-        style={({ pressed }) => [
-          styles.hero,
-          {
-            backgroundColor: colors.elevated,
-            borderColor: colors.border,
-            opacity: pressed ? 0.92 : 1,
-          },
-        ]}
-      >
-        <View style={styles.heroTop}>
-          {match.status === "live" ? (
-            <LiveBadge />
-          ) : (
-            <Text style={[styles.heroStatus, { color: colors.mutedForeground }]}>
-              {match.status === "final" ? "FINAL" : (match.startTime ?? "PROX")}
-            </Text>
-          )}
-          <Text style={[styles.heroVenue, { color: colors.mutedForeground }]}>
-            {match.venue}
-          </Text>
-        </View>
+  if (!homeTeam || !awayTeam) return null;
 
-        <View style={styles.heroRow}>
-          <View style={styles.heroSide}>
-            <TeamBadge short={home.short} color={home.colorHex} size={56} />
-            <Text style={[styles.heroName, { color: colors.foreground }]}>
-              {home.name}
-            </Text>
-            <Text style={[styles.heroRecord, { color: colors.mutedForeground }]}>
-              {home.wins}-{home.losses}
-              {home.ties ? `-${home.ties}` : ""}
-            </Text>
-          </View>
-
-          <View style={styles.heroScore}>
-            <Animated.View
-              style={[
-                styles.heroScoreBox,
-                { backgroundColor: scoreBg },
-              ]}
-            >
-              <Animated.Text
-                style={[styles.heroScoreText, { color: scoreColor }]}
-              >
-                {match.homeScore}
-              </Animated.Text>
-              <Text style={[styles.heroScoreSep, { color: colors.mutedForeground }]}>
-                :
-              </Text>
-              <Animated.Text
-                style={[styles.heroScoreText, { color: scoreColor }]}
-              >
-                {match.awayScore}
-              </Animated.Text>
-            </Animated.View>
-            {match.minute ? (
-              <Text style={[styles.heroMinute, { color: colors.live }]}>
-                {match.minute}
-              </Text>
-            ) : null}
-          </View>
-
-          <View style={styles.heroSide}>
-            <TeamBadge short={away.short} color={away.colorHex} size={56} />
-            <Text style={[styles.heroName, { color: colors.foreground }]}>
-              {away.name}
-            </Text>
-            <Text style={[styles.heroRecord, { color: colors.mutedForeground }]}>
-              {away.wins}-{away.losses}
-              {away.ties ? `-${away.ties}` : ""}
-            </Text>
-          </View>
-        </View>
-
-        <View
-          style={[
-            styles.heroFooter,
-            { borderTopColor: colors.border },
-          ]}
-        >
-          <View style={styles.heroFooterLeft}>
-            <Feather name="bar-chart-2" size={14} color={colors.mutedForeground} />
-            <Text
-              style={[styles.heroFooterText, { color: colors.mutedForeground }]}
-            >
-              Ver detalle del equipo
-            </Text>
-          </View>
-          <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-        </View>
-      </Pressable>
-    );
-  }
+  const isHero = variant === "hero";
+  const safeBorderColor = colors?.border || "#3A3A3C";
 
   return (
-    <Pressable
-      onPress={() => router.push(`/team/${home.id}`)}
-      style={({ pressed }) => [
-        styles.row,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-          opacity: pressed ? 0.92 : 1,
-        },
-      ]}
-    >
-      <View style={styles.rowHeader}>
-        {match.status === "live" ? (
-          <LiveBadge small />
-        ) : (
-          <Text
-            style={[
-              styles.rowStatus,
-              {
-                color:
-                  match.status === "final"
-                    ? colors.mutedForeground
-                    : colors.accent,
-              },
-            ]}
-          >
-            {match.status === "final" ? "FINAL" : (match.startTime ?? "PROX")}
+    <Animated.View style={[styles.container, { backgroundColor: animatedBg, borderColor: safeBorderColor }]}>
+      <Pressable
+        onPress={() => router.push(`/match/${match.id}`)}
+        style={({ pressed }) => [
+          styles.pressableArea,
+          { opacity: pressed ? 0.7 : 1 },
+        ]}
+      >
+        {/* HEADER DE LA TARJETA */}
+        <View style={styles.header}>
+          <Text style={[styles.statusText, match.status === "live" && { color: colors?.live || '#E10600' }]}>
+            {match.status === "live"
+              ? match.minute || "EN JUEGO"
+              : match.status === "final"
+              ? "FINALIZADO"
+              : match.startTime}
           </Text>
-        )}
-        <Text style={[styles.rowMinute, { color: colors.mutedForeground }]}>
-          {match.minute ?? match.venue}
-        </Text>
-      </View>
+        </View>
 
-      <View style={styles.teamLine}>
-        <View style={styles.teamLineLeft}>
-          <TeamBadge short={home.short} color={home.colorHex} size={32} />
-          <Text style={[styles.teamLineName, { color: colors.foreground }]}>
-            {home.name}
-          </Text>
+        {/* CONTENIDO PRINCIPAL (Equipos y Marcador) */}
+        <View style={styles.teamsContainer}>
+          {/* LOCAL */}
+          <View style={styles.teamColumn}>
+            <TeamBadge short={homeTeam.short} color="#FFF" size={isHero ? 56 : 40} />
+            <Text style={[styles.teamName, isHero && styles.teamNameHero]}>
+              {homeTeam.name.toUpperCase()}
+            </Text>
+          </View>
+
+          {/* MARCADOR */}
+          <View style={styles.scoreColumn}>
+            {match.status === "scheduled" ? (
+              <Text style={styles.vsText}>VS</Text>
+            ) : (
+              <View style={styles.scoreRow}>
+                <Text style={[styles.scoreText, isHero && styles.scoreTextHero]}>
+                  {match.homeScore}
+                </Text>
+                <Text style={[styles.scoreDivider, isHero && styles.scoreDividerHero]}>
+                  -
+                </Text>
+                <Text style={[styles.scoreText, isHero && styles.scoreTextHero]}>
+                  {match.awayScore}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* VISITANTE */}
+          <View style={styles.teamColumn}>
+            <TeamBadge short={awayTeam.short} color="#FFF" size={isHero ? 56 : 40} />
+            <Text style={[styles.teamName, isHero && styles.teamNameHero]}>
+              {awayTeam.name.toUpperCase()}
+            </Text>
+          </View>
         </View>
-        <Animated.Text
-          style={[
-            styles.teamLineScore,
-            { color: scoreColor, backgroundColor: scoreBg, paddingHorizontal: 6, borderRadius: 4 },
-          ]}
-        >
-          {match.homeScore}
-        </Animated.Text>
-      </View>
-      <View style={styles.teamLine}>
-        <View style={styles.teamLineLeft}>
-          <TeamBadge short={away.short} color={away.colorHex} size={32} />
-          <Text style={[styles.teamLineName, { color: colors.foreground }]}>
-            {away.name}
-          </Text>
-        </View>
-        <Animated.Text
-          style={[
-            styles.teamLineScore,
-            { color: scoreColor, backgroundColor: scoreBg, paddingHorizontal: 6, borderRadius: 4 },
-          ]}
-        >
-          {match.awayScore}
-        </Animated.Text>
-      </View>
-    </Pressable>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginHorizontal: 18,
-    borderRadius: 18,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 18,
+  container: {
+    borderRadius: 20, 
     overflow: "hidden",
+    borderWidth: 1,
   },
-  heroTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  pressableArea: {
+    padding: 20,
+  },
+  header: {
     alignItems: "center",
-    marginBottom: 14,
+    marginBottom: 16,
   },
-  heroStatus: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 11,
-    letterSpacing: 1,
+  statusText: {
+    fontFamily: "Inter_800ExtraBold",
+    fontSize: 10,
+    letterSpacing: 2,
+    color: '#8E8E93', // Tu gris por defecto
   },
-  heroVenue: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 11,
-    letterSpacing: 0.5,
-  },
-  heroRow: {
+  teamsContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 6,
   },
-  heroSide: {
-    alignItems: "center",
+  teamColumn: {
     flex: 1,
-    gap: 6,
+    alignItems: "center",
+    gap: 12,
   },
-  heroName: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
+  teamName: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 12,
+    color: "#FFFFFF",
     textAlign: "center",
   },
-  heroRecord: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 11,
+  teamNameHero: {
+    fontSize: 14,
+    fontFamily: "Inter_900Black",
   },
-  heroScore: {
+  scoreColumn: {
+    flex: 1,
     alignItems: "center",
-    paddingHorizontal: 8,
+    justifyContent: "center",
   },
-  heroScoreBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    gap: 4,
+  vsText: {
+    fontFamily: "Inter_800ExtraBold",
+    fontSize: 14,
+    color: '#8E8E93',
+    letterSpacing: 2,
   },
-  heroScoreText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 36,
-    letterSpacing: -1,
-  },
-  heroScoreSep: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 28,
-  },
-  heroMinute: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 11,
-    letterSpacing: 0.5,
-    marginTop: 4,
-  },
-  heroFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  heroFooterLeft: { flexDirection: "row", alignItems: "center", gap: 6 },
-  heroFooterText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 12,
-  },
-
-  row: {
-    marginHorizontal: 18,
-    marginBottom: 10,
-    borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 14,
-    gap: 8,
-  },
-  rowHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  rowStatus: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 11,
-    letterSpacing: 0.8,
-  },
-  rowMinute: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 11,
-  },
-  teamLine: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  teamLineLeft: {
+  scoreRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    flex: 1,
   },
-  teamLineName: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    flex: 1,
+  scoreText: {
+    fontFamily: "Inter_900Black",
+    fontSize: 28,
+    color: "#FFFFFF",
   },
-  teamLineScore: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 18,
-    minWidth: 28,
-    textAlign: "right",
+  scoreTextHero: {
+    fontSize: 44,
+    letterSpacing: -2,
+  },
+  scoreDivider: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 20,
+    color: '#3A3A3C', // Tu gris claro
+  },
+  scoreDividerHero: {
+    fontSize: 28,
   },
 });
