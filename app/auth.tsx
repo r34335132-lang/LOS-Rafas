@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -10,36 +10,66 @@ import {
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, { FadeIn, FadeInDown, withRepeat, withTiming, useSharedValue, useAnimatedStyle } from "react-native-reanimated";
 
 import { useApp } from "@/context/AppContext";
-import { useColors } from "@/hooks/useColors";
+import { useColors } from "hooks/useColors";
 
 export default function AuthScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { signIn } = useApp();
+  
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // --- MODO ESPÍA: EFECTO DE CÓDIGO (TYPEWRITER) ---
+  const [terminalText, setTerminalText] = useState("");
+  const textToType = mode === "login" 
+    ? "> ESTABLECIENDO CONEXIÓN SEGURA...\n> ENCRIPTACIÓN NIVEL 4: ACTIVA.\n> ESPERANDO CREDENCIALES DE ACCESO..."
+    : "> INICIANDO PROTOCOLO DE RECLUTAMIENTO...\n> GENERANDO NUEVO ID EN BASE DE DATOS...\n> ESPERANDO DATOS DEL OPERADOR...";
+
+  useEffect(() => {
+    setTerminalText("");
+    let currentText = "";
+    let currentIndex = 0;
+
+    const interval = setInterval(() => {
+      currentText += textToType[currentIndex];
+      setTerminalText(currentText);
+      currentIndex++;
+      if (currentIndex >= textToType.length) clearInterval(interval);
+    }, 25); // Velocidad de escritura (milisegundos)
+
+    return () => clearInterval(interval);
+  }, [mode]);
+
+  // --- ANIMACIÓN DEL CURSOR PARPADEANTE ---
+  const cursorOpacity = useSharedValue(1);
+  useEffect(() => {
+    cursorOpacity.value = withRepeat(withTiming(0, { duration: 500 }), -1, true);
+  }, []);
+  const cursorStyle = useAnimatedStyle(() => ({ opacity: cursorOpacity.value }));
+
+  // --- LÓGICA DE LOGIN ---
   const submit = async () => {
     setError(null);
     if (!email.includes("@") || password.length < 4) {
-      setError("Verifica tu correo y contraseña.");
+      setError("> ERROR 403: CREDENCIALES INVÁLIDAS.");
       return;
     }
-    const display =
-      mode === "register" && name.trim()
-        ? name.trim()
-        : email.split("@")[0]!;
+    const display = mode === "register" && name.trim() ? name.trim() : email.split("@")[0]!;
     await signIn(email.trim(), display);
     router.back();
   };
 
+  const activeAccent = colors.primary; // O puedes forzar un "#00FF41" para que parezca Matrix
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: '#050505' }]}>
       <KeyboardAwareScrollView
         bottomOffset={20}
         keyboardShouldPersistTaps="handled"
@@ -49,131 +79,105 @@ export default function AuthScreen() {
           paddingBottom: insets.bottom + 24,
         }}
       >
+        {/* TOP BAR - COMMAND ABORT */}
         <View style={styles.topBar}>
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={10}
-            style={[styles.iconBtn, { backgroundColor: colors.card }]}
-          >
-            <Feather name="x" size={18} color={colors.foreground} />
+          <Pressable onPress={() => router.back()} hitSlop={10} style={styles.abortBtn}>
+            <Text style={styles.abortText}>[ ABORTAR ]</Text>
           </Pressable>
         </View>
 
-        <View style={styles.brandWrap}>
-          <View style={[styles.brandBadge, { backgroundColor: colors.primary }]}>
-            <Text style={styles.brandBadgeText}>R</Text>
-          </View>
-          <Text style={[styles.brandTitle, { color: colors.foreground }]}>
-            RUGIDO
-          </Text>
-          <Text style={[styles.brandSub, { color: colors.primary }]}>
-            DEPORTIVO DURANGO
-          </Text>
-        </View>
+        {/* LOGO SYSTEM */}
+        <Animated.View entering={FadeInDown.duration(600)} style={styles.brandWrap}>
+          <Feather name="shield" size={48} color={activeAccent} style={{ marginBottom: 10 }} />
+          <Text style={[styles.brandTitle, { color: '#FFF' }]}>SYS.RUGIDO.CORE</Text>
+          <Text style={[styles.brandSub, { color: activeAccent }]}>V 1.0.4 // ACCESO RESTRINGIDO</Text>
+        </Animated.View>
 
+        {/* TERMINAL SCREEN (CONSOLA) */}
+        <Animated.View entering={FadeIn.delay(300).duration(800)} style={styles.terminalBox}>
+          <Text style={[styles.terminalText, { color: activeAccent }]}>
+            {terminalText}
+            <Animated.Text style={cursorStyle}>_</Animated.Text>
+          </Text>
+        </Animated.View>
+
+        {/* FORMULARIO ESTILO TERMINAL */}
         <View style={styles.form}>
-          <Text style={[styles.heading, { color: colors.foreground }]}>
-            {mode === "login" ? "Bienvenido de vuelta" : "Crea tu cuenta"}
-          </Text>
-          <Text style={[styles.sub, { color: colors.mutedForeground }]}>
-            Sigue a tus equipos y guarda tus noticias favoritas.
-          </Text>
-
-          {mode === "register" ? (
-            <View
-              style={[
-                styles.inputWrap,
-                { backgroundColor: colors.card, borderColor: colors.border },
-              ]}
-            >
-              <Feather name="user" size={16} color={colors.mutedForeground} />
+          
+          {mode === "register" && (
+            <View style={styles.inputWrap}>
+              <Text style={[styles.prompt, { color: activeAccent }]}>{">"} ALIAS:</Text>
               <TextInput
-                style={[styles.input, { color: colors.foreground }]}
-                placeholder="Nombre"
-                placeholderTextColor={colors.mutedForeground}
+                style={[styles.input, { color: '#FFF' }]}
+                placeholder="[ INGRESE NOMBRE ]"
+                placeholderTextColor="rgba(255,255,255,0.2)"
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
+                selectionColor={activeAccent}
               />
             </View>
-          ) : null}
+          )}
 
-          <View
-            style={[
-              styles.inputWrap,
-              { backgroundColor: colors.card, borderColor: colors.border },
-            ]}
-          >
-            <Feather name="mail" size={16} color={colors.mutedForeground} />
+          <View style={styles.inputWrap}>
+            <Text style={[styles.prompt, { color: activeAccent }]}>{">"} IDENTIFICADOR:</Text>
             <TextInput
-              style={[styles.input, { color: colors.foreground }]}
-              placeholder="Correo"
-              placeholderTextColor={colors.mutedForeground}
+              style={[styles.input, { color: '#FFF' }]}
+              placeholder="[ CORREO ELECTRÓNICO ]"
+              placeholderTextColor="rgba(255,255,255,0.2)"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
+              selectionColor={activeAccent}
             />
           </View>
 
-          <View
-            style={[
-              styles.inputWrap,
-              { backgroundColor: colors.card, borderColor: colors.border },
-            ]}
-          >
-            <Feather name="lock" size={16} color={colors.mutedForeground} />
+          <View style={styles.inputWrap}>
+            <Text style={[styles.prompt, { color: activeAccent }]}>{">"} CLAVE:</Text>
             <TextInput
-              style={[styles.input, { color: colors.foreground }]}
-              placeholder="Contraseña"
-              placeholderTextColor={colors.mutedForeground}
+              style={[styles.input, { color: '#FFF' }]}
+              placeholder="[ CONTRASEÑA ]"
+              placeholderTextColor="rgba(255,255,255,0.2)"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              selectionColor={activeAccent}
             />
           </View>
 
-          {error ? (
-            <Text style={[styles.error, { color: colors.destructive }]}>
+          {error && (
+            <Animated.Text entering={FadeIn} style={styles.error}>
               {error}
-            </Text>
-          ) : null}
+            </Animated.Text>
+          )}
 
-          <Pressable
-            onPress={submit}
-            style={({ pressed }) => [
-              styles.submit,
-              { backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 },
-            ]}
-          >
-            <Text style={styles.submitText}>
-              {mode === "login" ? "Entrar" : "Crear cuenta"}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setMode(mode === "login" ? "register" : "login")}
-            style={styles.toggle}
-          >
-            <Text
-              style={[
-                styles.toggleText,
-                { color: colors.mutedForeground },
+          {/* BOTONES DE COMANDO */}
+          <View style={{ marginTop: 20, gap: 16 }}>
+            <Pressable
+              onPress={submit}
+              style={({ pressed }) => [
+                styles.submit,
+                { 
+                  backgroundColor: pressed ? activeAccent : 'transparent',
+                  borderColor: activeAccent 
+                },
               ]}
             >
-              {mode === "login"
-                ? "¿Aún sin cuenta? "
-                : "¿Ya tienes cuenta? "}
-              <Text
-                style={{
-                  color: colors.foreground,
-                  fontFamily: "Inter_700Bold",
-                }}
-              >
-                {mode === "login" ? "Regístrate" : "Inicia sesión"}
+              {({ pressed }) => (
+                <Text style={[styles.submitText, { color: pressed ? '#000' : activeAccent }]}>
+                  {mode === "login" ? ">> EJECUTAR ACCESO" : ">> INICIAR REGISTRO"}
+                </Text>
+              )}
+            </Pressable>
+
+            <Pressable onPress={() => setMode(mode === "login" ? "register" : "login")} style={styles.toggle}>
+              <Text style={styles.toggleText}>
+                {mode === "login" ? "CMD: RECLUTAR_NUEVO_AGENTE" : "CMD: VOLVER_A_LOGIN"}
               </Text>
-            </Text>
-          </Pressable>
+            </Pressable>
+          </View>
+
         </View>
       </KeyboardAwareScrollView>
     </View>
@@ -182,99 +186,69 @@ export default function AuthScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    paddingHorizontal: 18,
+  
+  // ABORT BUTTON
+  topBar: { flexDirection: "row", justifyContent: "flex-end", paddingHorizontal: 24, paddingTop: 10 },
+  abortBtn: { paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1, borderColor: 'rgba(255,0,0,0.5)', borderRadius: 4, backgroundColor: 'rgba(255,0,0,0.1)' },
+  abortText: { fontFamily: 'Inter_800ExtraBold', fontSize: 10, color: '#FF3333', letterSpacing: 2 },
+
+  // BRAND SECURE
+  brandWrap: { alignItems: "center", paddingTop: 40, paddingBottom: 20 },
+  brandTitle: { fontFamily: "Inter_900Black", fontSize: 28, letterSpacing: 6 },
+  brandSub: { fontFamily: "Inter_700Bold", fontSize: 10, letterSpacing: 4, marginTop: 4 },
+
+  // TERMINAL SCREEN
+  terminalBox: {
+    marginHorizontal: 24,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 8,
+    padding: 16,
+    minHeight: 100, // Para que no brinque cuando escribe
+    marginBottom: 20,
   },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
+  terminalText: {
+    fontFamily: "monospace", // Usa fuente de código real del sistema
+    fontSize: 12,
+    lineHeight: 20,
+    letterSpacing: 0.5,
   },
-  brandWrap: {
-    alignItems: "center",
-    paddingTop: 24,
-    paddingBottom: 12,
-    gap: 6,
-  },
-  brandBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  brandBadgeText: {
-    color: "#fff",
-    fontFamily: "Inter_700Bold",
-    fontSize: 28,
-  },
-  brandTitle: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 22,
-    letterSpacing: 4,
-  },
-  brandSub: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 11,
-    letterSpacing: 3,
-  },
-  form: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    gap: 12,
-  },
-  heading: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 24,
-    letterSpacing: -0.5,
-  },
-  sub: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 13,
-    marginBottom: 6,
-  },
+
+  // FORMULARIO TÁCTICO
+  form: { paddingHorizontal: 24, gap: 16 },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.3)',
+    paddingBottom: 8,
+  },
+  prompt: {
+    fontFamily: "Inter_900Black",
+    fontSize: 12,
+    letterSpacing: 2,
+    width: 140, // Ancho fijo para alinear los inputs como tabla
   },
   input: {
     flex: 1,
-    fontFamily: "Inter_500Medium",
-    fontSize: 15,
+    fontFamily: "monospace", // La contraseña y el correo se ven como código
+    fontSize: 14,
     paddingVertical: 0,
+    letterSpacing: 1,
   },
-  error: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 12,
-  },
+  
+  error: { fontFamily: "monospace", fontSize: 11, color: '#FF3333', marginTop: 10 },
+  
+  // COMMAND BUTTONS
   submit: {
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderRadius: 4,
     alignItems: "center",
-    marginTop: 6,
   },
-  submitText: {
-    color: "#fff",
-    fontFamily: "Inter_700Bold",
-    fontSize: 15,
-    letterSpacing: 0.3,
-  },
-  toggle: {
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  toggleText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 13,
-  },
+  submitText: { fontFamily: "Inter_900Black", fontSize: 14, letterSpacing: 3 },
+  
+  toggle: { alignItems: "center", paddingVertical: 12 },
+  toggleText: { fontFamily: "monospace", fontSize: 11, color: 'rgba(255,255,255,0.5)', textDecorationLine: 'underline' },
 });
