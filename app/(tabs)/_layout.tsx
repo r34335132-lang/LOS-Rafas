@@ -1,18 +1,25 @@
-import { Feather, Ionicons } from "@expo/vector-icons"; // <-- Agregamos Ionicons para la bici
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Tabs, useRouter } from "expo-router";
 import React from "react";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context"; // <-- Importamos los Insets
 
 import { useColors } from "@/hooks/useColors";
 
 export default function TabLayout() {
   const colors = useColors();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme !== "light";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
   const router = useRouter();
+  
+  // Detecta el espacio que ocupan los botones de Android o la barra de iOS
+  const insets = useSafeAreaInsets(); 
+  
+  // Calculamos márgenes dinámicos. Si no hay botones/barra (insets = 0), dejamos 10px de gracia.
+  const bottomPadding = insets.bottom > 0 ? insets.bottom : 10;
+  // La altura será de 60px (base de los iconos) + el espacio de los botones del teléfono
+  const tabHeight = isWeb ? 84 : 60 + bottomPadding;
 
   return (
     <Tabs
@@ -31,15 +38,14 @@ export default function TabLayout() {
           backgroundColor: isIOS ? "transparent" : colors.elevated,
           borderTopWidth: 0,
           elevation: 0,
-          height: isIOS ? 88 : 64,
-          paddingBottom: isIOS ? 30 : 10,
-          ...(isWeb ? { height: 84 } : {}),
+          height: tabHeight, // <-- Altura dinámica
+          paddingBottom: bottomPadding, // <-- Padding dinámico
         },
         tabBarBackground: () =>
           isIOS ? (
             <BlurView
               intensity={95}
-              tint={isDark ? "dark" : "light"}
+              tint="dark"
               style={StyleSheet.absoluteFill}
             />
           ) : (
@@ -59,7 +65,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: "Inicio",
           tabBarIcon: ({ color }) => <Feather name="home" size={22} color={color} />,
         }}
       />
@@ -71,16 +77,25 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 🚲 BOTÓN DE CICLISMO (FAB) PULIDO 🚲 */}
       <Tabs.Screen
         name="rodar"
         options={{
           tabBarLabel: () => null,
           tabBarIcon: () => (
             <View style={styles.fabContainer}>
-              <View style={[styles.fab, { backgroundColor: colors.primary }]}>
-                {/* Ícono de Bicicleta Moderno */}
-                <Ionicons name="bicycle" size={32} color="#000" style={styles.bikeIcon} />
+              <View style={[
+                styles.fab, 
+                { 
+                  backgroundColor: colors.primary,
+                  borderColor: colors.background
+                }
+              ]}>
+                <Ionicons 
+                  name="bicycle" 
+                  size={32} 
+                  color={colors.background}
+                  style={styles.bikeIcon} 
+                />
               </View>
             </View>
           ),
@@ -108,7 +123,6 @@ export default function TabLayout() {
         }}
       />
       
-      {/* Ocultamos la pestaña de noticias */}
       <Tabs.Screen name="news" options={{ href: null }} />
     </Tabs>
   );
@@ -118,8 +132,8 @@ const styles = StyleSheet.create({
   fabContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 60, // Contenedor más ajustado
-    top: -12,   // Flota lo suficiente pero sin despegarse tanto
+    height: 60,
+    top: -12, 
   },
   fab: {
     width: 60,
@@ -127,17 +141,14 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    // Sombras súper suaves y premium estilo Apple
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
+    shadowColor: "#E10600",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
     elevation: 8,
-    // Borde blanco/grisáceo para que resalte del fondo oscuro
     borderWidth: 4,
-    borderColor: '#1C1C1C', 
   },
   bikeIcon: {
-    marginLeft: 2, // Ajuste óptico para que la bici se vea 100% centrada
+    marginLeft: 2, 
   }
 });

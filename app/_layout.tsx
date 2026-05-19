@@ -5,6 +5,7 @@ import {
   Inter_700Bold,
   useFonts,
 } from "@expo-google-fonts/inter";
+import { BebasNeue_400Regular } from "@expo-google-fonts/bebas-neue"; // <-- Fuente ROCA Sports
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -29,7 +30,8 @@ function RootLayoutNav() {
         headerStyle: { backgroundColor: colors.dark.background },
         headerTintColor: colors.dark.foreground,
         headerTitleStyle: {
-          fontFamily: "Inter_700Bold",
+          fontFamily: "BebasNeue_400Regular", // <-- Toque agresivo en los títulos
+          fontSize: 26, // Más grande para que impacte
           color: colors.dark.foreground,
         },
         contentStyle: { backgroundColor: colors.dark.background },
@@ -43,11 +45,15 @@ function RootLayoutNav() {
       />
       <Stack.Screen
         name="team/[id]"
-        options={{ title: "Equipo", headerTransparent: false }}
+        options={{ title: "EQUIPO", headerTransparent: false }}
       />
       <Stack.Screen
         name="news/[id]"
         options={{ title: "", headerTransparent: true }}
+      />
+      <Stack.Screen
+        name="tracker"
+        options={{ title: "TRACKER", headerTransparent: false }}
       />
     </Stack>
   );
@@ -59,6 +65,7 @@ export default function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
+    BebasNeue_400Regular, // <-- Cargamos la nueva fuente
   });
 
   useEffect(() => {

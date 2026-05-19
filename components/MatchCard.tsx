@@ -29,7 +29,7 @@ export function MatchCard({ match, variant = "default", flashKey }: MatchCardPro
         Animated.timing(flashAnim, {
           toValue: 1,
           duration: 300,
-          useNativeDriver: false, // Debe ser false al animar colores
+          useNativeDriver: false,
         }),
         Animated.timing(flashAnim, {
           toValue: 0,
@@ -40,11 +40,9 @@ export function MatchCard({ match, variant = "default", flashKey }: MatchCardPro
     }
   }, [flashKey]);
 
-  // FALLBACKS DE SEGURIDAD (Aquí matamos el error "Invariant Violation")
-  // Si colors.card es undefined, usamos tu negro elevado (#1C1C1E)
-  // Si colors.liveFlash es undefined, usamos tu rojo oscuro (#B00400)
+  // Colores de la paleta ROCA Sports
   const safeCardColor = colors?.card || "#1C1C1E";
-  const safeFlashColor = colors?.liveFlash || "#B00400";
+  const safeFlashColor = colors?.liveFlash || "#B00400"; // El rojo oscuro de ROCA
 
   const animatedBg = flashAnim.interpolate({
     inputRange: [0, 1],
@@ -65,22 +63,30 @@ export function MatchCard({ match, variant = "default", flashKey }: MatchCardPro
           { opacity: pressed ? 0.7 : 1 },
         ]}
       >
-        {/* HEADER DE LA TARJETA */}
+        {/* HEADER DE LA TARJETA (Minuto o Estado) */}
         <View style={styles.header}>
-          <Text style={[styles.statusText, match.status === "live" && { color: colors?.live || '#E10600' }]}>
-            {match.status === "live"
-              ? match.minute || "EN JUEGO"
-              : match.status === "final"
-              ? "FINALIZADO"
-              : match.startTime}
-          </Text>
+          <View style={styles.statusBadge}>
+            {match.status === "live" && (
+              <View style={[styles.liveIndicator, { backgroundColor: colors.primary }]} />
+            )}
+            <Text style={[
+              styles.statusText, 
+              match.status === "live" && { color: colors.primary }
+            ]}>
+              {match.status === "live"
+                ? match.minute || "EN JUEGO"
+                : match.status === "final"
+                ? "FINALIZADO"
+                : match.startTime}
+            </Text>
+          </View>
         </View>
 
         {/* CONTENIDO PRINCIPAL (Equipos y Marcador) */}
         <View style={styles.teamsContainer}>
           {/* LOCAL */}
           <View style={styles.teamColumn}>
-            <TeamBadge short={homeTeam.short} color="#FFF" size={isHero ? 56 : 40} />
+            <TeamBadge short={homeTeam.short} color="#FFF" size={isHero ? 64 : 48} />
             <Text style={[styles.teamName, isHero && styles.teamNameHero]}>
               {homeTeam.name.toUpperCase()}
             </Text>
@@ -107,7 +113,7 @@ export function MatchCard({ match, variant = "default", flashKey }: MatchCardPro
 
           {/* VISITANTE */}
           <View style={styles.teamColumn}>
-            <TeamBadge short={awayTeam.short} color="#FFF" size={isHero ? 56 : 40} />
+            <TeamBadge short={awayTeam.short} color="#FFF" size={isHero ? 64 : 48} />
             <Text style={[styles.teamName, isHero && styles.teamNameHero]}>
               {awayTeam.name.toUpperCase()}
             </Text>
@@ -120,22 +126,38 @@ export function MatchCard({ match, variant = "default", flashKey }: MatchCardPro
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 20, 
+    borderRadius: 16, // Bordes un poco más duros, menos redondos (estilo más deportivo/tech)
     overflow: "hidden",
     borderWidth: 1,
   },
   pressableArea: {
     padding: 20,
+    paddingTop: 16,
   },
   header: {
     alignItems: "center",
     marginBottom: 16,
   },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "rgba(0,0,0,0.3)", // Fondo translúcido oscuro para la píldora de tiempo
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  liveIndicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   statusText: {
-    fontFamily: "Inter_800ExtraBold",
-    fontSize: 10,
-    letterSpacing: 2,
-    color: '#8E8E93', // Tu gris por defecto
+    fontFamily: "Inter_700Bold",
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: '#8E8E93',
   },
   teamsContainer: {
     flexDirection: "row",
@@ -145,17 +167,17 @@ const styles = StyleSheet.create({
   teamColumn: {
     flex: 1,
     alignItems: "center",
-    gap: 12,
+    gap: 8,
   },
   teamName: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 12,
+    fontFamily: "BebasNeue_400Regular", // <-- FUENTE DEPORTIVA
+    fontSize: 22,
     color: "#FFFFFF",
     textAlign: "center",
+    letterSpacing: 1,
   },
   teamNameHero: {
-    fontSize: 14,
-    fontFamily: "Inter_900Black",
+    fontSize: 28, // Nombres gigantes si es el partido principal
   },
   scoreColumn: {
     flex: 1,
@@ -163,31 +185,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   vsText: {
-    fontFamily: "Inter_800ExtraBold",
-    fontSize: 14,
-    color: '#8E8E93',
+    fontFamily: "BebasNeue_400Regular",
+    fontSize: 28,
+    color: '#3A3A3C',
     letterSpacing: 2,
   },
   scoreRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "center",
+    gap: 12,
   },
   scoreText: {
-    fontFamily: "Inter_900Black",
-    fontSize: 28,
+    fontFamily: "BebasNeue_400Regular", // <-- NÚMEROS ESTILO ESTADIO
+    fontSize: 48,
     color: "#FFFFFF",
+    marginTop: 6, // Compensación óptica para Bebas Neue
   },
   scoreTextHero: {
-    fontSize: 44,
-    letterSpacing: -2,
+    fontSize: 68, // Marcador colosal para la vista principal
   },
   scoreDivider: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 20,
-    color: '#3A3A3C', // Tu gris claro
+    fontFamily: "BebasNeue_400Regular",
+    fontSize: 32,
+    color: '#3A3A3C', 
+    marginTop: 4,
   },
   scoreDividerHero: {
-    fontSize: 28,
+    fontSize: 42,
   },
 });

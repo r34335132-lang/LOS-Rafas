@@ -34,6 +34,7 @@ export function AppHeader({
         <View style={{ flex: 1 }}>
           {showLogo ? (
             <View style={styles.logoRow}>
+              {/* Escudo/Badge minimalista de ROCA */}
               <View
                 style={[
                   styles.logoBadge,
@@ -42,17 +43,18 @@ export function AppHeader({
               >
                 <Text style={styles.logoBadgeText}>R</Text>
               </View>
-              <View>
+              <View style={styles.brandTextContainer}>
                 <Text style={[styles.brandTop, { color: colors.foreground }]}>
-                  RUGIDO
+                  ROCA
                 </Text>
                 <Text style={[styles.brandBottom, { color: colors.primary }]}>
-                  DEPORTIVO DGO
+                  SPORTS
                 </Text>
               </View>
             </View>
           ) : (
             <>
+              {/* Títulos de secciones cuando no se muestra el logo */}
               <Text style={[styles.title, { color: colors.foreground }]}>
                 {title}
               </Text>
@@ -69,12 +71,12 @@ export function AppHeader({
 
         <View style={styles.actions}>
           <View
-            style={[styles.iconBtn, { backgroundColor: colors.card }]}
+            style={[styles.iconBtn, { backgroundColor: colors.elevated }]}
           >
             <Feather name="search" size={18} color={colors.foreground} />
           </View>
           <View
-            style={[styles.iconBtn, { backgroundColor: colors.card }]}
+            style={[styles.iconBtn, { backgroundColor: colors.elevated }]}
           >
             <Feather name="bell" size={18} color={colors.foreground} />
           </View>
@@ -96,53 +98,60 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 26,
-    letterSpacing: -0.5,
+    fontFamily: "BebasNeue_400Regular", // Tipografía agresiva para los títulos de vista
+    fontSize: 32,
+    letterSpacing: 1,
+    textTransform: "uppercase",
   },
   subtitle: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 12,
-    marginTop: 2,
-    letterSpacing: 0.5,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+    marginTop: -4, // Compensa la altura de Bebas Neue
+    letterSpacing: 0.8,
     textTransform: "uppercase",
   },
   logoRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
   },
   logoBadge: {
-    width: 36,
-    height: 36,
+    width: 42, // Ligeramente más grande para dar presencia
+    height: 42,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
   logoBadgeText: {
     color: "#fff",
-    fontFamily: "Inter_700Bold",
-    fontSize: 20,
+    fontFamily: "BebasNeue_400Regular",
+    fontSize: 30,
+    marginTop: 4, // Bebas Neue necesita un ligero empuje hacia abajo para verse centrado
+  },
+  brandTextContainer: {
+    justifyContent: "center",
   },
   brandTop: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 16,
+    fontFamily: "BebasNeue_400Regular",
+    fontSize: 32,
     letterSpacing: 1.5,
-    lineHeight: 18,
+    lineHeight: 32,
   },
   brandBottom: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 11,
-    letterSpacing: 1.8,
-    lineHeight: 13,
-    marginTop: 1,
+    fontFamily: "BebasNeue_400Regular",
+    fontSize: 18,
+    letterSpacing: 3,
+    lineHeight: 18,
+    marginTop: -4, // Pega la palabra "SPORTS" a "ROCA" para que se vea como un solo bloque sólido
   },
-  actions: { flexDirection: "row", gap: 8 },
+  actions: { flexDirection: "row", gap: 10 },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#1C1C1E", // Borde sutil para integrarse al fondo oscuro
   },
 });

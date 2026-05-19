@@ -1,3 +1,5 @@
+// constants/colors.ts
+
 const palette = {
   red: "#E10600",
   redDark: "#B00400",
@@ -62,7 +64,7 @@ const sharedDark = {
 };
 
 const colors = {
-  // Forzamos ambos al dark theme para el look inmersivo
+  // Forzamos ambos al dark theme para el look inmersivo y competitivo
   light: sharedDark,
   dark: sharedDark,
   radius: 14,
