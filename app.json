@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Rugido Deportivo Durango",
+    "name": "Roca Sport Durango",
     "slug": "rugido-deportivo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -23,7 +23,9 @@
       "package": "com.rugidodeportivo.app",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -43,6 +45,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2f22f55f-253e-482d-b034-c687410cdef2"
+      }
     }
   }
 }
