@@ -1,24 +1,23 @@
 // constants/colors.ts
 
 const palette = {
-  red: "#E10600",
-  redDark: "#B00400",
-  black: "#0B0B0B", // El negro profundo de Roca Sports
-  blackElevated: "#151515",
-  blackCard: "#1C1C1E",
+  neonGreen: "#39FF14", // Verde neón principal
+  neonGreenDark: "#2DB30F",
+  black: "#050505", // Negro ultra profundo
+  blackElevated: "#111111",
+  blackCard: "#1A1A1A",
   white: "#FFFFFF",
   blue: "#0057FF",
   orange: "#FF6A00",
-  green: "#00C853",
   yellow: "#FFD600",
   gray: "#8E8E93",
   grayLight: "#3A3A3C",
-  grayDark: "#2C2C2E",
+  grayDark: "#222222",
 };
 
 const sharedDark = {
   text: palette.white,
-  tint: palette.red,
+  tint: palette.neonGreen, // <-- Cambiado a verde neón
 
   background: palette.black,
   foreground: palette.white,
@@ -28,8 +27,8 @@ const sharedDark = {
 
   elevated: palette.blackElevated,
 
-  primary: palette.red, // Rojo Roca Sports
-  primaryForeground: palette.white,
+  primary: palette.neonGreen, // <-- Cambiado a verde neón
+  primaryForeground: palette.black, // Texto negro sobre botones verdes para máximo contraste
 
   secondary: palette.grayDark,
   secondaryForeground: palette.white,
@@ -40,32 +39,20 @@ const sharedDark = {
   accent: palette.yellow,
   accentForeground: palette.black,
 
-  destructive: "#FF3B30",
-  destructiveForeground: palette.white,
-
   border: palette.grayLight,
   input: palette.grayDark,
 
-  // Sport accents
-  sportFlag: palette.orange,
-  sportSoccer: palette.red,
-  sportBasketball: palette.orange,
-  sportFitness: palette.green,
-  sportNews: palette.blue,
-
   // Status
-  live: palette.red,
-  liveFlash: palette.redDark,
+  live: palette.neonGreen,
+  liveFlash: palette.neonGreenDark,
 
   // Brand
-  brandRed: palette.red,
-  brandRedDark: palette.redDark,
+  brandPrimary: palette.neonGreen,
   brandBlack: palette.black,
 };
 
 const colors = {
-  // Forzamos ambos al dark theme para el look inmersivo y competitivo
-  light: sharedDark,
+  light: sharedDark, // Forzamos el tema oscuro inmersivo
   dark: sharedDark,
   radius: 14,
 };
