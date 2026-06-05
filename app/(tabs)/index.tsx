@@ -207,8 +207,9 @@ export default function HomeScreen() {
 
           <Pressable
             style={[styles.registerBtnHeader, { backgroundColor: "#39FF14" }]}
+            onPress={() => router.push("/create-league")}
           >
-            <Text style={styles.registerBtnTextHeader}>JUGAR</Text>
+            <Text style={styles.registerBtnTextHeader}>CREAR LIGA</Text>
           </Pressable>
         </View>
       </Animated.View>
@@ -452,10 +453,13 @@ export default function HomeScreen() {
 
             <Text style={styles.ctaTitle}>ÚNETE A LA ÉLITE</Text>
             <Text style={styles.ctaDesc}>
-              El terreno está listo. Inscribe a tu equipo hoy mismo.
+              El terreno está listo. Inscribe a tu equipo o liga hoy mismo.
             </Text>
 
-            <PressableCard style={styles.ctaBtn}>
+            <PressableCard 
+              style={styles.ctaBtn}
+              onPress={() => router.push("/create-league")}
+            >
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                 <Text style={styles.ctaBtnText}>INICIAR REGISTRO</Text>
                 <MaterialCommunityIcons name="chevron-double-right" size={20} color="#39FF14" />
