@@ -1,9 +1,9 @@
-import { Feather, Ionicons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Tabs, useRouter } from "expo-router";
 import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context"; // <-- Importamos los Insets
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
 
@@ -76,38 +76,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <Feather name="activity" size={22} color={color} />,
         }}
       />
-
-      <Tabs.Screen
-        name="rodar"
-        options={{
-          tabBarLabel: () => null,
-          tabBarIcon: () => (
-            <View style={styles.fabContainer}>
-              <View style={[
-                styles.fab, 
-                { 
-                  backgroundColor: colors.primary,
-                  borderColor: colors.background
-                }
-              ]}>
-                <Ionicons 
-                  name="bicycle" 
-                  size={32} 
-                  color={colors.background}
-                  style={styles.bikeIcon} 
-                />
-              </View>
-            </View>
-          ),
-        }}
-        listeners={{
-          tabPress: (e) => {
-            e.preventDefault();
-            router.push("/tracker");
-          },
-        }}
-      />
-
       <Tabs.Screen
         name="sports"
         options={{
@@ -124,31 +92,7 @@ export default function TabLayout() {
       />
       
       <Tabs.Screen name="news" options={{ href: null }} />
+      <Tabs.Screen name="rodar" options={{ href: null }} />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  fabContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 60,
-    top: -12, 
-  },
-  fab: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#E10600",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 4,
-  },
-  bikeIcon: {
-    marginLeft: 2, 
-  }
-});

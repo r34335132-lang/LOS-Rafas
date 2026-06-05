@@ -51,10 +51,7 @@ function RootLayoutNav() {
         name="news/[id]"
         options={{ title: "", headerTransparent: true }}
       />
-      <Stack.Screen
-        name="tracker"
-        options={{ title: "TRACKER", headerTransparent: false }}
-      />
+     
     </Stack>
   );
 }

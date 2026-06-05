@@ -10,7 +10,15 @@ import {
   Dimensions,
   Image
 } from "react-native";
-import Animated, { FadeIn, FadeInDown, LinearTransition, ZoomIn } from "react-native-reanimated";
+import Animated, { 
+  FadeIn, 
+  FadeInDown, 
+  LinearTransition, 
+  ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring
+} from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -46,6 +54,35 @@ export default function ProfileScreen() {
   // Color principal para la credencial
   const userAccent = colors.primary;
 
+  // ─── LÓGICA DE ANIMACIÓN 3D (FLIP) ──────────────────────────────────────────
+  const flipValue = useSharedValue(0);
+
+  const handleFlip = () => {
+    flipValue.value = withSpring(flipValue.value === 0 ? 180 : 0, {
+      damping: 15,
+      stiffness: 100,
+    });
+  };
+
+  const frontAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotateY: `${flipValue.value}deg` }],
+      backfaceVisibility: 'hidden',
+    };
+  });
+
+  const backAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotateY: `${flipValue.value + 180}deg` }],
+      backfaceVisibility: 'hidden',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    };
+  });
+
   return (
     <View style={[styles.container, { backgroundColor: '#050505' }]}>
       
@@ -71,32 +108,28 @@ export default function ProfileScreen() {
           </Text>
         </View>
 
-        {/* 2. CREDENCIAL DE TORNEO (GAFETE DEPORTIVO) */}
+        {/* 2. CREDENCIAL DE TORNEO (GAFETE DEPORTIVO INTERACTIVO) */}
         <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.credentialContainer}>
-          <View style={styles.credentialWrapper}>
+          
+          <Pressable onPress={handleFlip} style={styles.credentialWrapper}>
             
             {/* El "Hoyo" para colgar la credencial (Efecto físico) */}
             <View style={styles.lanyardHoleBase}>
               <View style={styles.lanyardHole} />
             </View>
 
-            <View style={[styles.credentialCard, { borderColor: `${userAccent}50` }]}>
-              {/* Fondo metálico/plástico de la credencial */}
+            {/* ─── CARA FRONTAL DE LA CREDENCIAL ─── */}
+            <Animated.View style={[styles.credentialCard, { borderColor: `${userAccent}50` }, frontAnimatedStyle]}>
               <LinearGradient colors={['#1A1A1A', '#0A0A0A']} style={StyleSheet.absoluteFillObject} />
-              
-              {/* Marca de agua gigante de fondo */}
               <Text style={styles.watermarkBg} numberOfLines={1}>ROCA</Text>
               <Ionicons name="finger-print" size={140} color="rgba(255,255,255,0.03)" style={styles.fingerprintBg} />
 
-              {/* Cabecera de la credencial */}
               <View style={[styles.credHeader, { backgroundColor: userAccent }]}>
                 <Text style={styles.credHeaderText}>CREDENCIAL OFICIAL</Text>
                 <Text style={styles.credHeaderYear}>2026</Text>
               </View>
 
-              {/* Cuerpo de la credencial */}
               <View style={styles.credBody}>
-                {/* Foto tamaño infantil/pasaporte */}
                 <View style={styles.photoContainer}>
                   {isAuthenticated ? (
                     <Image source={{ uri: RANDOM_USER_IMG }} style={styles.profilePhoto} />
@@ -105,7 +138,6 @@ export default function ProfileScreen() {
                       <Ionicons name="person" size={40} color="#333" />
                     </View>
                   )}
-                  {/* Etiqueta de ROL sobre la foto */}
                   <View style={[styles.roleTag, { backgroundColor: isAuthenticated ? '#E10600' : '#555' }]}>
                     <Text style={styles.roleTagText}>
                       {isAuthenticated ? "JUGADOR" : "INVITADO"}
@@ -113,7 +145,6 @@ export default function ProfileScreen() {
                   </View>
                 </View>
 
-                {/* Datos del Jugador */}
                 <View style={styles.credInfo}>
                   <Text style={styles.infoLabel}>NOMBRE / NAME</Text>
                   <Text style={styles.infoName} numberOfLines={2}>
@@ -135,16 +166,64 @@ export default function ProfileScreen() {
                 </View>
               </View>
 
-              {/* Pie de la credencial (Códigos de barras) */}
               <View style={styles.credFooter}>
                 <View>
-                  <Text style={styles.footerLabel}>SISTEMA DE VERIFICACIÓN</Text>
+                  <Text style={styles.footerLabel}>TOCA PARA VOLTEAR</Text>
                   <Text style={styles.footerCode}>{email || "Esperando conexión..."}</Text>
                 </View>
                 <Ionicons name="qr-code" size={42} color="#FFF" style={{ opacity: 0.8 }} />
               </View>
-            </View>
-          </View>
+            </Animated.View>
+
+            {/* ─── CARA TRASERA DE LA CREDENCIAL (ESTADÍSTICAS) ─── */}
+            <Animated.View style={[styles.credentialCard, { borderColor: `${userAccent}50` }, backAnimatedStyle]}>
+              <LinearGradient colors={['#0F0F0F', '#050505']} style={StyleSheet.absoluteFillObject} />
+              
+              <View style={[styles.credHeader, { backgroundColor: '#333' }]}>
+                <Text style={[styles.credHeaderText, { color: '#FFF' }]}>TELEMETRÍA DEL JUGADOR</Text>
+                <MaterialCommunityIcons name="rotate-3d-variant" size={16} color="#FFF" />
+              </View>
+
+              <View style={styles.backBody}>
+                {isAuthenticated ? (
+                  <>
+                    <View style={styles.backStatsGrid}>
+                      <View style={styles.backStatItem}>
+                        <Text style={[styles.backStatValue, { color: userAccent }]}>42</Text>
+                        <Text style={styles.backStatLabel}>PARTIDOS</Text>
+                      </View>
+                      <View style={styles.backStatItem}>
+                        <Text style={[styles.backStatValue, { color: userAccent }]}>18</Text>
+                        <Text style={styles.backStatLabel}>ANOTACIONES</Text>
+                      </View>
+                      <View style={styles.backStatItem}>
+                        <Text style={[styles.backStatValue, { color: userAccent }]}>7</Text>
+                        <Text style={styles.backStatLabel}>ASISTENCIAS</Text>
+                      </View>
+                      <View style={styles.backStatItem}>
+                        <Text style={[styles.backStatValue, { color: userAccent }]}>3</Text>
+                        <Text style={styles.backStatLabel}>MVP</Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.barcodeContainer}>
+                      {/* Simulación de código de barras */}
+                      {[...Array(25)].map((_, i) => (
+                        <View key={i} style={[styles.barcodeLine, { width: Math.random() * 4 + 1 }]} />
+                      ))}
+                    </View>
+                    <Text style={styles.barcodeText}>JUGADOR CONFIRMADO - ACTIVO</Text>
+                  </>
+                ) : (
+                  <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="lock" size={40} color="#555" style={{ marginBottom: 10 }} />
+                    <Text style={[styles.infoLabel, { textAlign: 'center' }]}>INICIA SESIÓN PARA VER ESTADÍSTICAS</Text>
+                  </View>
+                )}
+              </View>
+            </Animated.View>
+
+          </Pressable>
 
           {/* Botón CTA Integrado abajo de la credencial */}
           <Pressable
@@ -169,7 +248,7 @@ export default function ProfileScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* 3. PANEL DE ESTADÍSTICAS (Separado de la credencial) */}
+        {/* 3. PANEL DE ESTADÍSTICAS GENERALES */}
         <Animated.View entering={FadeInDown.duration(600).delay(150).springify()} style={styles.statsPanel}>
           <View style={styles.statBox}>
             <Text style={[styles.statValue, { color: userAccent }]}>{favTeams.length}</Text>
@@ -262,7 +341,7 @@ export default function ProfileScreen() {
         {/* FOOTER SYSTEM */}
         <View style={styles.footer}>
           <Text style={styles.footerLine}>LICENCIA DEPORTIVA OFICIAL</Text>
-          <Text style={styles.footerLine}>RUGIDO APP V1.0</Text>
+          <Text style={styles.footerLine}>ROCA SPORTS V1.0</Text>
         </View>
 
       </ScrollView>
@@ -291,7 +370,6 @@ const styles = StyleSheet.create({
   credentialContainer: { paddingHorizontal: 20, marginBottom: 20, zIndex: 3, alignItems: 'center' },
   credentialWrapper: { width: '100%', alignItems: 'center', position: 'relative' },
   
-  // El agujero del lanyard (Para colgarla)
   lanyardHoleBase: { 
     width: 60, height: 20, 
     backgroundColor: '#1A1A1A', 
@@ -302,46 +380,49 @@ const styles = StyleSheet.create({
   },
   lanyardHole: { width: 30, height: 6, backgroundColor: '#000', borderRadius: 10 },
 
-  // La Tarjeta en sí
   credentialCard: {
     width: '100%',
     backgroundColor: '#111',
     borderRadius: 16,
     borderWidth: 2,
     overflow: 'hidden',
-    position: 'relative',
     shadowColor: '#000', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.8, shadowRadius: 20, elevation: 15,
   },
   watermarkBg: { position: 'absolute', top: 60, left: -20, fontFamily: 'Inter_900Black', fontSize: 90, color: 'rgba(255,255,255,0.02)', transform: [{ rotate: '-10deg' }] },
   fingerprintBg: { position: 'absolute', right: -20, top: 40 },
 
-  // Cabecera "Oficial" de la credencial
   credHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 8 },
   credHeaderText: { fontFamily: 'Inter_900Black', fontSize: 11, color: '#000', letterSpacing: 2 },
   credHeaderYear: { fontFamily: 'Inter_900Black', fontSize: 11, color: '#000', letterSpacing: 1 },
 
+  // Frente
   credBody: { flexDirection: 'row', padding: 16, gap: 16 },
-  
-  // Foto pasaporte
   photoContainer: { width: 90, height: 120, borderRadius: 8, borderWidth: 3, borderColor: '#FFF', position: 'relative', backgroundColor: '#222' },
   profilePhoto: { width: '100%', height: '100%', borderRadius: 4 },
   placeholderPhoto: { width: '100%', height: '100%', borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
   roleTag: { position: 'absolute', bottom: -10, left: -5, right: -5, paddingVertical: 4, borderRadius: 4, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.5, shadowRadius: 4, shadowOffset: { width:0, height: 2 } },
   roleTagText: { fontFamily: 'Inter_900Black', fontSize: 9, color: '#FFF', letterSpacing: 1 },
 
-  // Datos
   credInfo: { flex: 1, justifyContent: 'center' },
   infoLabel: { fontFamily: 'Inter_700Bold', fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: 1 },
   infoName: { fontFamily: 'Inter_900Black', fontSize: 22, color: '#FFF', lineHeight: 24, textTransform: 'uppercase' },
   infoId: { fontFamily: 'Inter_600SemiBold', fontSize: 14, color: '#FFF', letterSpacing: 2 },
-  
   accessLevelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
   accessLevel: { fontFamily: 'Inter_900Black', fontSize: 13, letterSpacing: 1 },
 
-  // Footer / QR
   credFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(0,0,0,0.2)' },
-  footerLabel: { fontFamily: 'Inter_700Bold', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 1, marginBottom: 2 },
+  footerLabel: { fontFamily: 'Inter_700Bold', fontSize: 8, color: 'rgba(255,255,255,0.4)', letterSpacing: 1, marginBottom: 2 },
   footerCode: { fontFamily: 'Inter_500Medium', fontSize: 11, color: '#FFF' },
+
+  // Reverso de la Tarjeta
+  backBody: { flex: 1, padding: 20, justifyContent: 'center' },
+  backStatsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10, marginBottom: 20 },
+  backStatItem: { width: '47%', backgroundColor: 'rgba(255,255,255,0.05)', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  backStatValue: { fontFamily: 'Inter_900Black', fontSize: 28, marginBottom: 4 },
+  backStatLabel: { fontFamily: 'Inter_800ExtraBold', fontSize: 9, color: 'rgba(255,255,255,0.5)', letterSpacing: 1 },
+  barcodeContainer: { flexDirection: 'row', height: 40, alignItems: 'center', justifyContent: 'space-between', opacity: 0.6, marginBottom: 8 },
+  barcodeLine: { height: '100%', backgroundColor: '#FFF' },
+  barcodeText: { fontFamily: 'Inter_600SemiBold', fontSize: 8, color: 'rgba(255,255,255,0.3)', letterSpacing: 3, textAlign: 'center' },
 
   // CTA Button
   ctaBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 14, borderRadius: 16, borderWidth: 1, marginTop: 20, width: '100%' },
