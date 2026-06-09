@@ -16,11 +16,11 @@ export type Sport = {
 export const SPORTS: Sport[] = [
   {
     key: "flag",
-    name: "Flag Football",
+    name: "Flag Durango",
     accent: "sportFlag",
     icon: "flag",
     highlighted: true,
-    description: "La liga estrella de Durango",
+    description: "La primera liga en inscribirse",
   },
   {
     key: "soccer",

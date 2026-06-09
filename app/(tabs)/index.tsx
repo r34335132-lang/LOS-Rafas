@@ -44,12 +44,20 @@ const THEME = {
 };
 
 // ─── CONSTANTES DE IMÁGENES Y TEXTURAS ───────────────────────────────────────
+// Fotografía espectacular de fútbol para la cabecera (HERO)
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=1200&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=1200&auto=format&fit=crop";
 const ROCK_TEXTURE =
   "https://images.unsplash.com/photo-1525914813433-886dc8183afa?q=80&w=1000&auto=format&fit=crop";
 
 const LEAGUES = [
+  {
+    id: "flag",
+    name: "Flag Durango",
+    image: "https://scontent.fntr12-1.fna.fbcdn.net/v/t39.30808-6/608026284_1349946833839582_7546106417429830507_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=z9srjYOfspUQ7kNvwGgEM6l&_nc_oc=AdqWHvqioEwhJn4jV-5QT2gWFDbH-HkQ7mUP8-MAJwe72N9Hcs-slagNvRg0TzYOeEqZDKXjNgw52-MTn0w1FZzA&_nc_zt=23&_nc_ht=scontent.fntr12-1.fna&_nc_gid=_gM6fC0iischqvu9R---5g&_nc_ss=7b2a8&oh=00_Af9Zt2VIyDU6NicyUJgHyK-DIUTYW1mzZm_JKr1QKHDQGw&oe=6A292077",
+    icon: "flag" as const,
+    tag: "1RA LIGA INSCRITA",
+  },
   {
     id: "futbol",
     name: "Fútbol",
@@ -102,6 +110,11 @@ const STATS = [
 ];
 
 const SPONSORS = [
+  { 
+    name: "AGUA ROCA", 
+    image: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?q=80&w=800&auto=format&fit=crop", 
+    desc: "PATROCINADOR OFICIAL" 
+  },
   { 
     name: "NIKE", 
     image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800&auto=format&fit=crop", 
@@ -306,7 +319,7 @@ export default function HomeScreen() {
             </Text>
 
             <Text style={styles.heroDesc}>
-              Infraestructura élite, arbitraje profesional y la comunidad deportiva más agresiva de la ciudad.
+              Infraestructura élite, arbitraje profesional y la comunidad deportiva más grande de la ciudad.
             </Text>
 
             <View style={[styles.neonLine, { width: 80, marginBottom: 20 }]} />
