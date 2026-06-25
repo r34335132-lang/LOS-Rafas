@@ -1,9 +1,9 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, { FadeInDown, FadeIn, LinearTransition, withRepeat, withTiming, useSharedValue, useAnimatedStyle, useEffect } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeIn, LinearTransition, withRepeat, withTiming, useSharedValue, useAnimatedStyle } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { TeamBadge } from "@/components/TeamBadge";

@@ -1,4 +1,4 @@
-import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+﻿import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import {
@@ -27,6 +27,7 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useLeagues } from "@/hooks/leagues/useLeagues";
 import { useColors } from "@/hooks/useColors";
 
 const { width, height } = Dimensions.get("window");
@@ -50,50 +51,6 @@ const HERO_IMAGE =
 const ROCK_TEXTURE =
   "https://images.unsplash.com/photo-1525914813433-886dc8183afa?q=80&w=1000&auto=format&fit=crop";
 
-const LEAGUES = [
-  {
-    id: "flag",
-    name: "Flag Durango",
-    image: "https://scontent.fntr12-1.fna.fbcdn.net/v/t39.30808-6/608026284_1349946833839582_7546106417429830507_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=z9srjYOfspUQ7kNvwGgEM6l&_nc_oc=AdqWHvqioEwhJn4jV-5QT2gWFDbH-HkQ7mUP8-MAJwe72N9Hcs-slagNvRg0TzYOeEqZDKXjNgw52-MTn0w1FZzA&_nc_zt=23&_nc_ht=scontent.fntr12-1.fna&_nc_gid=_gM6fC0iischqvu9R---5g&_nc_ss=7b2a8&oh=00_Af9Zt2VIyDU6NicyUJgHyK-DIUTYW1mzZm_JKr1QKHDQGw&oe=6A292077",
-    icon: "flag" as const,
-    tag: "1RA LIGA INSCRITA",
-  },
-  {
-    id: "futbol",
-    name: "Fútbol",
-    image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800&auto=format&fit=crop",
-    icon: "soccer" as const,
-    tag: "LIGA PRO",
-  },
-  {
-    id: "basquetbol",
-    name: "Básquetbol",
-    image: "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=800&auto=format&fit=crop",
-    icon: "basketball" as const,
-    tag: "TORNEO ELITE",
-  },
-  {
-    id: "voleibol",
-    name: "Voleibol",
-    image: "https://images.unsplash.com/photo-1592656094267-764a45160876?q=80&w=800&auto=format&fit=crop",
-    icon: "volleyball" as const,
-    tag: "COPA INVIERNO",
-  },
-  {
-    id: "crossfit",
-    name: "CrossFit",
-    image: "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=1200&auto=format&fit=crop",
-    icon: "dumbbell" as const,
-    tag: "OPEN BOX",
-  },
-  {
-    id: "padel",
-    name: "Pádel",
-    image: "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?q=80&w=800&auto=format&fit=crop",
-    icon: "tennis" as const,
-    tag: "CIRCUITO",
-  },
-];
 
 const VALUES = [
   { icon: "account-group" as const, title: "Comunidad", desc: "Forjando alianzas." },
@@ -110,34 +67,51 @@ const STATS = [
 ];
 
 const SPONSORS = [
-  { 
-    name: "AGUA ROCA", 
-    image: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?q=80&w=800&auto=format&fit=crop", 
-    desc: "PATROCINADOR OFICIAL" 
+  {
+    name: "AGUA ROCA",
+    image: "https://tezjdmuurdwnkldtvicc.supabase.co/storage/v1/object/public/uploads/ChatGPT%20Image%209%20jun%202026,%2002_12_21%20p.m..png",
+    desc: "PATROCINADOR OFICIAL"
   },
-  { 
-    name: "NIKE", 
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800&auto=format&fit=crop", 
-    desc: "INDUMENTARIA OFICIAL" 
+  {
+    name: "NIKE",
+    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800&auto=format&fit=crop",
+    desc: "INDUMENTARIA OFICIAL"
   },
-  { 
-    name: "SMART FIT", 
-    image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop", 
-    desc: "SPONSOR DEPORTIVO" 
+  {
+    name: "SMART FIT",
+    image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop",
+    desc: "SPONSOR DEPORTIVO"
   },
-  { 
-    name: "POWERADE", 
-    image: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?q=80&w=800&auto=format&fit=crop", 
-    desc: "HIDRATACIÓN" 
+  {
+    name: "POWERADE",
+    image: "https://images.unsplash.com/photo-1527661591475-527312dd65f5?q=80&w=800&auto=format&fit=crop",
+    desc: "HIDRATACIÓN"
   },
-  { 
-    name: "RED BULL", 
-    image: "https://images.unsplash.com/photo-1566847420552-f04b2b115eb3?q=80&w=800&auto=format&fit=crop", 
-    desc: "ENERGÍA OFICIAL" 
+  {
+    name: "RED BULL",
+    image: "https://images.unsplash.com/photo-1566847420552-f04b2b115eb3?q=80&w=800&auto=format&fit=crop",
+    desc: "ENERGÍA OFICIAL"
   },
 ];
 
 // ─── COMPONENTES BASE ────────────────────────────────────────────────────────
+function sportIcon(sport: string) {
+  switch (sport) {
+    case "soccer":
+      return "soccer" as const;
+    case "flag":
+      return "football" as const;
+    case "basketball":
+      return "basketball" as const;
+    case "baseball":
+      return "baseball" as const;
+    case "volleyball":
+      return "volleyball" as const;
+    default:
+      return "trophy-outline" as const;
+  }
+}
+
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 function PressableCard({ children, style, onPress }: { children: React.ReactNode; style?: any; onPress?: () => void; }) {
@@ -192,16 +166,16 @@ function AnimatedSponsorCard({ sponsor, index }: { sponsor: any, index: number }
     <Animated.View entering={FadeInRight.duration(800).delay(index * 150).springify()}>
       <View style={styles.sponsorWrapper}>
         <Animated.View style={[styles.sponsorGlowBackground, glowStyle]} />
-        
+
         <PressableCard style={styles.sponsorCard}>
           <Image source={{ uri: sponsor.image }} style={styles.sponsorBgImage} />
-          
+
           <LinearGradient
             colors={["transparent", "rgba(5,5,5,0.7)", THEME.bg]}
             locations={[0, 0.4, 1]}
             style={StyleSheet.absoluteFillObject}
           />
-          
+
           <View style={styles.sponsorContent}>
             <View>
               <Text style={styles.sponsorName}>{sponsor.name}</Text>
@@ -254,7 +228,8 @@ function SectionHeading({ title, subtitle }: { title: string; subtitle?: string 
 // ─── HOME SCREEN ──────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  
+  const leaguesQuery = useLeagues();
+
   const heroScale = useSharedValue(1.1);
   useEffect(() => {
     heroScale.value = withTiming(1, { duration: 4000, easing: Easing.out(Easing.cubic) });
@@ -288,11 +263,11 @@ export default function HomeScreen() {
       </Animated.View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-        
+
         {/* ── 1. HERO PRINCIPAL ── */}
         <View style={styles.heroSection}>
           <Animated.Image source={{ uri: HERO_IMAGE }} style={[styles.heroBgImage, heroAnimStyle]} />
-          
+
           <LinearGradient
             colors={["rgba(5,5,5,0.2)", "rgba(5,5,5,0.6)", THEME.bg]}
             locations={[0, 0.5, 1]}
@@ -352,14 +327,18 @@ export default function HomeScreen() {
             snapToInterval={width * 0.7 + 16}
             decelerationRate="fast"
           >
-            {LEAGUES.map((league, index) => (
+            {(leaguesQuery.data ?? []).map((league, index) => (
               <Animated.View key={league.id} entering={FadeInRight.duration(600).delay(index * 150).springify()}>
-                <PressableCard 
+                <PressableCard
                   style={styles.leagueCard}
-                  onPress={() => router.push({ pathname: "/sports", params: { sportId: league.id } })}
+                  onPress={() => router.push(`/league/${league.id}` as any)}
                 >
-                  <Image source={{ uri: league.image }} style={styles.leagueImage} />
-                  
+                  {league.banner_url ? (
+                    <Image source={{ uri: league.banner_url }} style={styles.leagueImage} />
+                  ) : (
+                    <View style={[styles.leagueImage, { backgroundColor: league.primary_color }]} />
+                  )}
+
                   <LinearGradient
                     colors={["transparent", "rgba(5,5,5,0.4)", THEME.bg]}
                     locations={[0.2, 0.5, 1]}
@@ -368,17 +347,17 @@ export default function HomeScreen() {
 
                   <View style={styles.leagueContent}>
                     <View style={styles.leagueTagBox}>
-                      <Text style={styles.leagueTagText}>{league.tag}</Text>
+                      <Text style={styles.leagueTagText}>{league.category.toUpperCase()} · {league.season}</Text>
                     </View>
 
                     <View>
                       <Text style={styles.leagueName}>{league.name}</Text>
                       <View style={[styles.neonLine, { width: 40, marginBottom: 16 }]} />
                     </View>
-                    
+
                     <View style={styles.leagueActionRow}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        <MaterialCommunityIcons name={league.icon} size={20} color={THEME.neon} />
+                        <MaterialCommunityIcons name={sportIcon(league.sport)} size={20} color={league.accent_color || THEME.neon} />
                         <Text style={styles.leagueSubtext}>Ingresar</Text>
                       </View>
                       <View style={styles.arrowCircle}>
@@ -389,6 +368,13 @@ export default function HomeScreen() {
                 </PressableCard>
               </Animated.View>
             ))}
+            {!leaguesQuery.isLoading && (leaguesQuery.data?.length ?? 0) === 0 ? (
+              <PressableCard style={[styles.leagueCard, styles.emptyLeagueCard]} onPress={() => router.push("/create-league")}>
+                <MaterialCommunityIcons name="plus-circle-outline" size={46} color={THEME.neon} />
+                <Text style={styles.leagueName}>Crea tu primera liga</Text>
+                <Text style={styles.leagueSubtext}>Los datos aparecerán aquí desde Supabase.</Text>
+              </PressableCard>
+            ) : null}
           </ScrollView>
         </Animated.View>
 
@@ -432,7 +418,7 @@ export default function HomeScreen() {
           <View style={styles.aboutSection}>
             <Image source={{ uri: ROCK_TEXTURE }} style={[StyleSheet.absoluteFillObject, { opacity: 0.1 }]} />
             <LinearGradient colors={[THEME.surface, THEME.bg]} style={StyleSheet.absoluteFillObject} />
-            
+
             <View style={styles.aboutAccentLine} />
 
             <View style={{ padding: 24 }}>
@@ -512,7 +498,7 @@ export default function HomeScreen() {
 // ─── ESTILOS ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: THEME.bg },
-  
+
   // LÍNEA NEÓN (NUEVO)
   neonLine: {
     height: 3,
@@ -592,6 +578,12 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.surface,
     borderWidth: 1,
     borderColor: THEME.border,
+  },
+  emptyLeagueCard: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    gap: 12,
   },
   leagueImage: { ...StyleSheet.absoluteFillObject, width: "100%", height: "100%" },
   leagueContent: { flex: 1, justifyContent: "space-between", padding: 20 },

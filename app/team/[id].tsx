@@ -115,7 +115,7 @@ export default function TeamDetailScreen() {
               <Text style={[styles.winRateValue, { color: team.colorHex }]}>{winRate}%</Text>
             </View>
             <View style={styles.winRateBarBg}>
-              <Animated.View style={[styles.winRateBarFill, { width: `${winRate}%`, backgroundColor: team.colorHex }]} />
+              <Animated.View style={[styles.winRateBarFill, { width: `${winRate}%` as any, backgroundColor: team.colorHex }]} />
             </View>
           </View>
         </Animated.View>

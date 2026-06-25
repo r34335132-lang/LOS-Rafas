@@ -49,6 +49,13 @@ const sharedDark = {
   // Brand
   brandPrimary: palette.neonGreen,
   brandBlack: palette.black,
+
+  // Sports
+  sportFlag: palette.orange,
+  sportSoccer: palette.neonGreen,
+  sportBasketball: palette.blue,
+  sportFitness: palette.yellow,
+  sportNews: palette.yellow,
 };
 
 const colors = {

@@ -1,13 +1,13 @@
 import { Feather } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams } from "expo-router";
 import React from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Image, ImageSourcePropType, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { NEWS } from "@/constants/data";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
-const FEATURED_BY_SPORT: Record<string, ReturnType<typeof require>> = {
+const FEATURED_BY_SPORT: Record<string, ImageSourcePropType> = {
   flag: require("../../assets/images/featured-flag.png"),
   soccer: require("../../assets/images/featured-soccer.png"),
   basketball: require("../../assets/images/featured-basketball.png"),

@@ -48,6 +48,10 @@ function RootLayoutNav() {
         options={{ title: "EQUIPO", headerTransparent: false }}
       />
       <Stack.Screen
+        name="player/[id]"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="news/[id]"
         options={{ title: "", headerTransparent: true }}
       />

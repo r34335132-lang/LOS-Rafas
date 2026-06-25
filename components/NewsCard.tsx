@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, ImageSourcePropType, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { NewsItem } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
@@ -14,7 +14,7 @@ const SPORT_ACCENT: Record<string, "sportFlag" | "sportSoccer" | "sportBasketbal
   general: "sportNews",
 };
 
-const FEATURED_BY_SPORT: Record<string, ReturnType<typeof require>> = {
+const FEATURED_BY_SPORT: Record<string, ImageSourcePropType> = {
   flag: require("../assets/images/featured-flag.png"),
   soccer: require("../assets/images/featured-soccer.png"),
   basketball: require("../assets/images/featured-basketball.png"),

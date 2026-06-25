@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 
 import { SPORTS, SportKey, TEAMS } from "@/constants/data";
+import { FootballDashboard } from "@/components/FootballDashboard";
 import { useColors } from "@/hooks/useColors";
 import { supabase } from "@/lib/supabase"; // Importamos nuestro cliente de Supabase
 
@@ -265,7 +266,7 @@ export default function SportsScreen() {
               })}
             </ScrollView>
 
-            <View style={styles.toggleContainer}>
+            {activeSport !== "soccer" && <View style={styles.toggleContainer}>
               <Pressable 
                 style={[styles.toggleBtn, viewMode === "teams" && { backgroundColor: 'rgba(255,255,255,0.1)' }]}
                 onPress={() => setViewMode("teams")}
@@ -281,7 +282,7 @@ export default function SportsScreen() {
                 <Ionicons name="people" size={14} color={viewMode === "players" ? activeColor : "rgba(255,255,255,0.5)"} />
                 <Text style={[styles.toggleText, { color: viewMode === "players" ? "#FFF" : "rgba(255,255,255,0.5)" }]}>ATLETAS</Text>
               </Pressable>
-            </View>
+            </View>}
 
             <Animated.View key={`tourneys-${activeSport}`} entering={FadeInDown.duration(300)}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tournamentFilters}>
@@ -302,7 +303,7 @@ export default function SportsScreen() {
               </ScrollView>
             </Animated.View>
 
-            {viewMode === "players" && (
+            {activeSport !== "soccer" && viewMode === "players" && (
               <Animated.View entering={FadeInDown.duration(400)} style={styles.playerFiltersWrapper}>
                 <View style={styles.filterMainRow}>
                   <Pressable 
@@ -338,6 +339,10 @@ export default function SportsScreen() {
           </BlurView>
         </View>
 
+        {activeSport === "soccer" ? (
+          <FootballDashboard tournament={activeTournament} />
+        ) : (
+        <>
         <Animated.View key={`banner-${activeTournament}-${activeSport}`} entering={FadeIn.duration(500)} style={styles.bannerContainer}>
           <View style={[styles.bannerCard, { borderColor: `${activeColor}40`, shadowColor: activeColor }]}>
             <Image source={{ uri: sportBgImage }} style={StyleSheet.absoluteFillObject} />
@@ -498,6 +503,8 @@ export default function SportsScreen() {
           )}
 
         </View>
+        </>
+        )}
 
       </ScrollView>
     </View>

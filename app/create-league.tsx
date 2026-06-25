@@ -1,507 +1,426 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+﻿import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
-  Dimensions,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const { width } = Dimensions.get("window");
-const ROCK_TEXTURE = "https://images.unsplash.com/photo-1525914813433-886dc8183afa?q=80&w=1000&auto=format&fit=crop";
+import { LeagueBrandPreview } from "@/components/league/LeagueBrandPreview";
+import { PlayerCardPreview } from "@/components/league/PlayerCardPreview";
+import { useCreateLeague } from "@/hooks/leagues/useLeagues";
+import { uploadImageToSupabase } from "@/lib/services/storage";
+import type { LeagueInput } from "@/lib/validators";
+import { leagueInputSchema } from "@/lib/validators";
+import type { League, PlayerProfile } from "@/lib/types";
 
 const SPORTS = [
   { id: "soccer", name: "Fútbol", icon: "soccer" },
-  { id: "basketball", name: "Básquet", icon: "basketball" },
-  { id: "volleyball", name: "Vóley", icon: "volleyball" },
   { id: "flag", name: "Flag Football", icon: "football" },
-  { id: "padel", name: "Pádel", icon: "tennis" },
-];
+  { id: "basketball", name: "Básquet", icon: "basketball" },
+  { id: "baseball", name: "Béisbol", icon: "baseball" },
+  { id: "volleyball", name: "Voleibol", icon: "volleyball" },
+  { id: "other", name: "Otro", icon: "trophy-outline" },
+] as const;
 
-const STATS_OPTIONS = [
-  "Puntos / Goles",
-  "Asistencias",
-  "Tarjetas / Faltas",
-  "MVP del Partido",
-  "Rebotes / Intercepciones",
-  "Estadísticas Defensivas"
-];
+const CATEGORIES = ["varonil", "femenil", "mixto", "infantil", "juvenil", "libre"] as const;
+const STYLES = [
+  { id: "modern", name: "Deportivo moderno" },
+  { id: "upper_deck", name: "Upper Deck premium" },
+  { id: "urban", name: "Urbano" },
+  { id: "minimal", name: "Minimalista" },
+  { id: "classic", name: "Clásico" },
+] as const;
 
-const BRAND_COLORS = ["#39FF14", "#FF0000", "#0057FF", "#FFD600", "#FF00FF", "#FFFFFF"];
+const COLORS = ["#39FF14", "#0057FF", "#FFD600", "#FF6A00", "#E10600", "#6C63FF", "#FFFFFF", "#101010"];
 
-// --- Componente de línea neón ---
-function NeonLine({ style }: { style?: any }) {
-  return (
-    <View
-      style={[
-        {
-          height: 2,
-          backgroundColor: "#39FF14",
-          shadowColor: "#39FF14",
-          shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.8,
-          shadowRadius: 8,
-          elevation: 5,
-        },
-        style,
-      ]}
-    />
-  );
-}
+const initialForm: LeagueInput = {
+  name: "",
+  slug: "",
+  city: "",
+  state: "",
+  sport: "soccer",
+  category: "libre",
+  season: new Date().getFullYear().toString(),
+  description: "",
+  logo_url: null,
+  banner_url: null,
+  primary_color: "#39FF14",
+  secondary_color: "#101010",
+  accent_color: "#FFD600",
+  visual_style: "upper_deck",
+};
 
 export default function CreateLeagueScreen() {
   const insets = useSafeAreaInsets();
-  const [selectedSport, setSelectedSport] = useState("soccer");
-  const [selectedStats, setSelectedStats] = useState<string[]>(["Puntos / Goles"]);
-  const [selectedColor, setSelectedColor] = useState("#39FF14");
+  const createLeague = useCreateLeague();
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState<LeagueInput>(initialForm);
+  const [uploading, setUploading] = useState<"logo" | "banner" | null>(null);
 
-  const toggleStat = (stat: string) => {
-    if (selectedStats.includes(stat)) {
-      setSelectedStats(selectedStats.filter(s => s !== stat));
-    } else {
-      setSelectedStats([...selectedStats, stat]);
+  const previewLeague = useMemo(() => form as Partial<League>, [form]);
+  const previewProfile = useMemo(() => makePreviewProfile(form), [form]);
+
+  const update = <K extends keyof LeagueInput>(key: K, value: LeagueInput[K]) => {
+    setForm((current) => {
+      const next = { ...current, [key]: value };
+      if (key === "name" && !current.slug) {
+        next.slug = String(value)
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+      }
+      return next;
+    });
+  };
+
+  const pickImage = async (target: "logo" | "banner") => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.88,
+      aspect: target === "logo" ? [1, 1] : [16, 9],
+    });
+    if (result.canceled) return;
+
+    setUploading(target);
+    try {
+      const url = await uploadImageToSupabase({
+        bucket: "league-assets",
+        uri: result.assets[0].uri,
+        folder: `leagues/${form.slug || "draft"}`,
+      });
+      update(target === "logo" ? "logo_url" : "banner_url", url);
+    } catch (error: any) {
+      Alert.alert("No se pudo subir", error.message ?? "Revisa permisos de Storage.");
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const next = () => {
+    const partial = step === 0
+      ? leagueInputSchema.pick({ name: true, slug: true, city: true, state: true, sport: true, category: true, season: true, description: true }).safeParse(form)
+      : step === 1
+        ? leagueInputSchema.pick({ primary_color: true, secondary_color: true, accent_color: true, visual_style: true }).safeParse(form)
+        : { success: true as const };
+
+    if (!partial.success) {
+      Alert.alert("Revisa la información", partial.error.issues[0]?.message ?? "Datos inválidos");
+      return;
+    }
+    setStep((current) => Math.min(current + 1, 3));
+  };
+
+  const submit = async () => {
+    const parsed = leagueInputSchema.safeParse(form);
+    if (!parsed.success) {
+      Alert.alert("Revisa la información", parsed.error.issues[0]?.message ?? "Datos inválidos");
+      return;
+    }
+    try {
+      const league = await createLeague.mutateAsync(parsed.data);
+      router.replace(`/league/${league.id}` as any);
+    } catch (error: any) {
+      Alert.alert("No se pudo crear la liga", error.message ?? "Revisa Supabase/RLS.");
     }
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={{ flex: 1, backgroundColor: "#020202" }} 
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      {/* ── HEADER FIJO ────────────────────────────────────────── */}
+    <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <LinearGradient colors={["rgba(57,255,20,0.18)", "#050505"]} style={StyleSheet.absoluteFillObject} />
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <LinearGradient
-          colors={["rgba(2,2,2,0.95)", "rgba(2,2,2,0)"]}
-          style={StyleSheet.absoluteFillObject}
-        />
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Feather name="arrow-left" size={24} color="#FFF" />
+          <Feather name="arrow-left" size={22} color="#FFF" />
         </Pressable>
-        <View style={{ alignItems: "center", flex: 1, marginRight: 40 }}>
-          <Text style={styles.headerTitle}>REGISTRAR LIGA</Text>
-          <NeonLine style={{ width: 40, marginTop: 4 }} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerEyebrow}>NUEVA PLATAFORMA</Text>
+          <Text style={styles.headerTitle}>CREAR LIGA</Text>
         </View>
+        <Text style={styles.stepText}>{step + 1}/4</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        
-        {/* TEXTURA DE FONDO GLOBAL */}
-        <Image source={{ uri: ROCK_TEXTURE }} style={styles.globalTexture} />
-        
-        <Animated.View entering={FadeInDown.duration(600)}>
-          <Text style={styles.pageSubtitle}>Forja tu imperio deportivo. Configura las reglas, la imagen y el presupuesto.</Text>
-        </Animated.View>
-
-        {/* ── SECCIÓN 1: IDENTIDAD ──────────────────────────────── */}
-        <Animated.View entering={FadeInUp.duration(600).delay(100)} style={styles.section}>
-          <Text style={styles.sectionTitle}>1. IDENTIDAD VISUAL</Text>
-          
-          <View style={styles.card}>
-            {/* Foto de Logo */}
-            <View style={styles.logoUploadContainer}>
-              <Pressable style={styles.logoUploadBtn}>
-                <MaterialCommunityIcons name="camera-plus" size={32} color="rgba(255,255,255,0.4)" />
-                <Text style={styles.logoUploadText}>Subir Escudo / Logo</Text>
-              </Pressable>
-            </View>
-
-            {/* Nombre */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>NOMBRE DE LA LIGA</Text>
-              <TextInput 
-                style={styles.input} 
-                placeholder="Ej. Liga Premier..." 
-                placeholderTextColor="rgba(255,255,255,0.3)"
-              />
-            </View>
-
-            {/* Colores */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>COLOR PRINCIPAL</Text>
-              <View style={styles.colorRow}>
-                {BRAND_COLORS.map(color => (
-                  <Pressable 
-                    key={color} 
-                    onPress={() => setSelectedColor(color)}
-                    style={[
-                      styles.colorCircle, 
-                      { backgroundColor: color },
-                      selectedColor === color && styles.colorCircleSelected
-                    ]} 
-                  />
-                ))}
-              </View>
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* ── SECCIÓN 2: DISCIPLINA Y REGLAS ────────────────────── */}
-        <Animated.View entering={FadeInUp.duration(600).delay(200)} style={styles.section}>
-          <Text style={styles.sectionTitle}>2. DISCIPLINA Y REGLAS</Text>
-          
-          <View style={styles.card}>
-            <Text style={styles.inputLabel}>DEPORTE / CATEGORÍA</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 10 }}>
-              {SPORTS.map(sport => {
-                const isSelected = selectedSport === sport.id;
-                return (
-                  <Pressable 
-                    key={sport.id} 
-                    onPress={() => setSelectedSport(sport.id)}
-                    style={[styles.sportPill, isSelected && styles.sportPillSelected]}
-                  >
-                    <MaterialCommunityIcons 
-                      name={sport.icon as any} 
-                      size={20} 
-                      color={isSelected ? "#000" : "#FFF"} 
-                    />
-                    <Text style={[styles.sportPillText, isSelected && styles.sportPillTextSelected]}>
-                      {sport.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            <View style={{ height: 20 }} />
-
-            <Text style={styles.inputLabel}>ESTADÍSTICAS A RASTREAR</Text>
-            <View style={styles.statsGrid}>
-              {STATS_OPTIONS.map(stat => {
-                const isSelected = selectedStats.includes(stat);
-                return (
-                  <Pressable 
-                    key={stat} 
-                    onPress={() => toggleStat(stat)}
-                    style={[styles.statBox, isSelected && styles.statBoxSelected]}
-                  >
-                    <MaterialCommunityIcons 
-                      name={isSelected ? "check-box-outline" : "checkbox-blank-outline"} 
-                      size={20} 
-                      color={isSelected ? "#39FF14" : "rgba(255,255,255,0.4)"} 
-                    />
-                    <Text style={[styles.statText, isSelected && styles.statTextSelected]}>
-                      {stat}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* ── SECCIÓN 3: FINANZAS ───────────────────────────────── */}
-        <Animated.View entering={FadeInUp.duration(600).delay(300)} style={styles.section}>
-          <Text style={styles.sectionTitle}>3. CONFIGURACIÓN FINANCIERA</Text>
-          
-          <View style={styles.card}>
-            <View style={styles.financeRow}>
-              <View style={{ flex: 1, paddingRight: 10 }}>
-                <Text style={styles.inputLabel}>PRESUPUESTO APP</Text>
-                <View style={styles.moneyInputContainer}>
-                  <Text style={styles.moneyPrefix}>$</Text>
-                  <TextInput 
-                    style={styles.moneyInput} 
-                    placeholder="0.00" 
-                    placeholderTextColor="rgba(255,255,255,0.3)"
-                    keyboardType="numeric"
-                  />
-                </View>
-                <Text style={styles.helpText}>Destinado al sistema</Text>
-              </View>
-
-              <View style={styles.financeDivider} />
-
-              <View style={{ flex: 1, paddingLeft: 10 }}>
-                <Text style={styles.inputLabel}>COBRO JUGADOR</Text>
-                <View style={styles.moneyInputContainer}>
-                  <Text style={styles.moneyPrefix}>$</Text>
-                  <TextInput 
-                    style={styles.moneyInput} 
-                    placeholder="0.00" 
-                    placeholderTextColor="rgba(255,255,255,0.3)"
-                    keyboardType="numeric"
-                  />
-                </View>
-                <Text style={styles.helpText}>Inscripción/Arbitraje</Text>
-              </View>
-            </View>
-          </View>
-        </Animated.View>
-
-        {/* ── BOTÓN FINAL ───────────────────────────────────────── */}
-        <Animated.View entering={FadeInUp.duration(600).delay(400)} style={styles.submitSection}>
-          <Pressable style={styles.submitBtn}>
-            <LinearGradient
-              colors={["#0D3B03", "#39FF14", "#0D3B03"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[StyleSheet.absoluteFillObject, { opacity: 0.9 }]}
-            />
-            <Text style={styles.submitBtnText}>INICIALIZAR LIGA</Text>
-            <MaterialCommunityIcons name="lightning-bolt" size={20} color="#000" />
-          </Pressable>
-        </Animated.View>
-
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Progress step={step} accent={form.accent_color} />
+        {step === 0 ? <StepInfo form={form} update={update} /> : null}
+        {step === 1 ? <StepBranding form={form} update={update} pickImage={pickImage} uploading={uploading} /> : null}
+        {step === 2 ? <StepTemplate form={form} previewProfile={previewProfile} /> : null}
+        {step === 3 ? <StepConfirm form={form} previewLeague={previewLeague} previewProfile={previewProfile} /> : null}
       </ScrollView>
+
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
+        <Pressable disabled={step === 0} onPress={() => setStep((current) => Math.max(current - 1, 0))} style={[styles.secondaryBtn, step === 0 && { opacity: 0.35 }]}>
+          <Text style={styles.secondaryText}>ATRÁS</Text>
+        </Pressable>
+        <Pressable onPress={step === 3 ? submit : next} disabled={createLeague.isPending || Boolean(uploading)} style={[styles.primaryBtn, { backgroundColor: form.accent_color }]}>
+          {createLeague.isPending ? <ActivityIndicator color="#050505" /> : null}
+          <Text style={styles.primaryText}>{step === 3 ? "CREAR LIGA" : "CONTINUAR"}</Text>
+        </Pressable>
+      </View>
     </KeyboardAvoidingView>
   );
 }
 
+function Progress({ step, accent }: { step: number; accent: string }) {
+  return (
+    <View style={styles.progressWrap}>
+      {[0, 1, 2, 3].map((item) => (
+        <View key={item} style={[styles.progressItem, item <= step && { backgroundColor: accent }]} />
+      ))}
+    </View>
+  );
+}
+
+function StepInfo({ form, update }: { form: LeagueInput; update: <K extends keyof LeagueInput>(key: K, value: LeagueInput[K]) => void }) {
+  return (
+    <Animated.View entering={FadeInDown.duration(350)} style={styles.section}>
+      <Text style={styles.sectionTitle}>1. Información general</Text>
+      <Field label="Nombre de la liga" value={form.name} onChangeText={(value) => update("name", value)} placeholder="Ej. Liga Premier Durango" />
+      <Field label="Slug corto" value={form.slug} onChangeText={(value) => update("slug", value)} placeholder="liga-premier-dgo" autoCapitalize="none" />
+      <View style={styles.row}>
+        <Field compact label="Ciudad" value={form.city} onChangeText={(value) => update("city", value)} placeholder="Durango" />
+        <Field compact label="Estado" value={form.state} onChangeText={(value) => update("state", value)} placeholder="DGO" />
+      </View>
+      <PickerPills label="Deporte" items={SPORTS.map((item) => ({ id: item.id, name: item.name, icon: item.icon }))} selected={form.sport} onSelect={(value) => update("sport", value as LeagueInput["sport"])} />
+      <PickerPills label="Categoría" items={CATEGORIES.map((item) => ({ id: item, name: item }))} selected={form.category} onSelect={(value) => update("category", value as LeagueInput["category"])} />
+      <Field label="Temporada actual" value={form.season} onChangeText={(value) => update("season", value)} placeholder="2026" />
+      <Field label="Descripción corta" value={form.description ?? ""} onChangeText={(value) => update("description", value)} placeholder="Liga competitiva local..." multiline />
+    </Animated.View>
+  );
+}
+
+function StepBranding({
+  form,
+  update,
+  pickImage,
+  uploading,
+}: {
+  form: LeagueInput;
+  update: <K extends keyof LeagueInput>(key: K, value: LeagueInput[K]) => void;
+  pickImage: (target: "logo" | "banner") => void;
+  uploading: "logo" | "banner" | null;
+}) {
+  return (
+    <Animated.View entering={FadeInDown.duration(350)} style={styles.section}>
+      <Text style={styles.sectionTitle}>2. Branding visual</Text>
+      <LeagueBrandPreview league={form as Partial<League>} />
+      <View style={styles.uploadRow}>
+        <UploadButton label="Logo" loading={uploading === "logo"} done={Boolean(form.logo_url)} onPress={() => pickImage("logo")} />
+        <UploadButton label="Banner" loading={uploading === "banner"} done={Boolean(form.banner_url)} onPress={() => pickImage("banner")} />
+      </View>
+      <ColorPicker label="Color primario" selected={form.primary_color} onSelect={(value) => update("primary_color", value)} />
+      <ColorPicker label="Color secundario" selected={form.secondary_color} onSelect={(value) => update("secondary_color", value)} />
+      <ColorPicker label="Color de acento" selected={form.accent_color} onSelect={(value) => update("accent_color", value)} />
+      <PickerPills label="Estilo visual" items={STYLES.map((item) => ({ id: item.id, name: item.name }))} selected={form.visual_style} onSelect={(value) => update("visual_style", value as LeagueInput["visual_style"])} />
+      <Text style={styles.help}>Tipografía sugerida: Inter Black para datos, Bebas Neue para títulos deportivos.</Text>
+    </Animated.View>
+  );
+}
+
+function StepTemplate({ form, previewProfile }: { form: LeagueInput; previewProfile: PlayerProfile }) {
+  return (
+    <Animated.View entering={FadeInDown.duration(350)} style={styles.section}>
+      <Text style={styles.sectionTitle}>3. Plantilla base</Text>
+      <Text style={styles.help}>Se guardarán automáticamente cuatro plantillas iniciales: Upper Deck Elite, Rookie Card, MVP Edition y Team Identity.</Text>
+      <PlayerCardPreview profile={previewProfile} template={null} />
+    </Animated.View>
+  );
+}
+
+function StepConfirm({ form, previewLeague, previewProfile }: { form: LeagueInput; previewLeague: Partial<League>; previewProfile: PlayerProfile }) {
+  return (
+    <Animated.View entering={FadeInDown.duration(350)} style={styles.section}>
+      <Text style={styles.sectionTitle}>4. Confirmación</Text>
+      <LeagueBrandPreview league={previewLeague} />
+      <View style={{ height: 16 }} />
+      <PlayerCardPreview profile={previewProfile} template={null} />
+      <Text style={styles.help}>Al crear la liga se insertará el registro en Supabase y se inicializarán las plantillas default.</Text>
+    </Animated.View>
+  );
+}
+
+function Field({
+  label,
+  compact,
+  ...props
+}: React.ComponentProps<typeof TextInput> & { label: string; compact?: boolean }) {
+  return (
+    <View style={[styles.field, compact && { flex: 1 }]}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        {...props}
+        placeholderTextColor="rgba(255,255,255,0.28)"
+        style={[styles.input, props.multiline && styles.textArea]}
+      />
+    </View>
+  );
+}
+
+function PickerPills({
+  label,
+  items,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  items: { id: string; name: string; icon?: string }[];
+  selected: string;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillRow}>
+        {items.map((item) => {
+          const active = selected === item.id;
+          return (
+            <Pressable key={item.id} onPress={() => onSelect(item.id)} style={[styles.pill, active && styles.pillActive]}>
+              {item.icon ? <MaterialCommunityIcons name={item.icon as any} size={17} color={active ? "#050505" : "#FFF"} /> : null}
+              <Text style={[styles.pillText, active && styles.pillTextActive]}>{item.name}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+}
+
+function ColorPicker({ label, selected, onSelect }: { label: string; selected: string; onSelect: (color: string) => void }) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.colorRow}>
+        {COLORS.map((color) => (
+          <Pressable key={color} onPress={() => onSelect(color)} style={[styles.color, { backgroundColor: color }, selected === color && styles.colorActive]} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function UploadButton({ label, loading, done, onPress }: { label: string; loading: boolean; done: boolean; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} style={styles.uploadBtn}>
+      {loading ? <ActivityIndicator color="#39FF14" /> : <MaterialCommunityIcons name={done ? "check-circle" : "image-plus"} size={22} color={done ? "#39FF14" : "#FFF"} />}
+      <Text style={styles.uploadText}>{done ? `${label} listo` : `Subir ${label}`}</Text>
+    </Pressable>
+  );
+}
+
+function makePreviewProfile(form: LeagueInput): PlayerProfile {
+  const now = new Date().toISOString();
+  const league = {
+    id: "preview",
+    owner_id: null,
+    name: form.name || "Tu Liga",
+    slug: form.slug || "preview",
+    city: form.city || "Ciudad",
+    state: form.state || "Estado",
+    sport: form.sport,
+    category: form.category,
+    season: form.season || "2026",
+    description: form.description ?? "",
+    logo_url: form.logo_url ?? null,
+    banner_url: form.banner_url ?? null,
+    primary_color: form.primary_color,
+    secondary_color: form.secondary_color,
+    accent_color: form.accent_color,
+    visual_style: form.visual_style,
+    created_at: now,
+    updated_at: now,
+  } as League;
+
+  return {
+    id: "preview-player",
+    league_id: "preview",
+    team_id: "preview-team",
+    auth_user_id: null,
+    full_name: "Jugador Estrella",
+    nickname: "Rookie",
+    number: "10",
+    position: "Delantero",
+    birth_date: null,
+    photo_url: null,
+    status: "active",
+    credential_code: "LIGA-PLAYER-2026-0001",
+    created_at: now,
+    updated_at: now,
+    league,
+    team: {
+      id: "preview-team",
+      league_id: "preview",
+      name: "Equipo Demo",
+      logo_url: null,
+      primary_color: form.primary_color,
+      secondary_color: form.secondary_color,
+      coach_name: null,
+      created_at: now,
+    },
+    stats: {
+      id: "preview-stats",
+      player_id: "preview-player",
+      league_id: "preview",
+      season: form.season || "2026",
+      games: 8,
+      points: 0,
+      touchdowns: 0,
+      goals: 12,
+      assists: 5,
+      tackles: 0,
+      interceptions: 0,
+      mvp_count: 2,
+      created_at: now,
+      updated_at: now,
+    },
+  };
+}
+
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingBottom: 15,
-    zIndex: 10,
-    position: "absolute",
-    top: 0,
-    width: "100%"
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-  },
-  headerTitle: {
-    fontFamily: "Inter_900Black",
-    fontSize: 18,
-    color: "#FFF",
-    letterSpacing: 2,
-  },
-  scrollContent: {
-    paddingTop: 100, // Espacio para el header
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-  },
-  globalTexture: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.05,
-    resizeMode: "cover",
-  },
-  pageSubtitle: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 14,
-    color: "rgba(255,255,255,0.6)",
-    lineHeight: 22,
-    marginBottom: 30,
-    textAlign: "center",
-  },
-  section: {
-    marginBottom: 25,
-  },
-  sectionTitle: {
-    fontFamily: "Inter_900Black",
-    fontSize: 16,
-    color: "#39FF14",
-    marginBottom: 10,
-    letterSpacing: 1,
-    borderLeftWidth: 3,
-    borderLeftColor: "#39FF14",
-    paddingLeft: 10,
-  },
-  card: {
-    backgroundColor: "#0A0A0A",
-    borderWidth: 1,
-    borderColor: "rgba(57,255,20,0.2)",
-    borderRadius: 8,
-    padding: 20,
-  },
-  
-  // Inputs
-  inputGroup: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 11,
-    color: "rgba(255,255,255,0.5)",
-    letterSpacing: 1,
-    marginBottom: 8,
-    textTransform: "uppercase",
-  },
-  input: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    borderRadius: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: "#FFF",
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 16,
-  },
-  
-  // Logo Upload
-  logoUploadContainer: {
-    alignItems: "center",
-    marginBottom: 25,
-  },
-  logoUploadBtn: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 1.5,
-    borderStyle: "dashed",
-    borderColor: "rgba(57,255,20,0.4)",
-    backgroundColor: "rgba(57,255,20,0.05)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoUploadText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 10,
-    color: "rgba(255,255,255,0.5)",
-    marginTop: 8,
-    textAlign: "center",
-    width: "70%",
-  },
-
-  // Color Picker
-  colorRow: {
-    flexDirection: "row",
-    gap: 15,
-  },
-  colorCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  colorCircleSelected: {
-    borderColor: "#FFF",
-    transform: [{ scale: 1.15 }],
-  },
-
-  // Sports Selector
-  sportPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 30,
-  },
-  sportPillSelected: {
-    backgroundColor: "#39FF14",
-    borderColor: "#39FF14",
-  },
-  sportPillText: {
-    fontFamily: "Inter_700Bold",
-    fontSize: 13,
-    color: "#FFF",
-  },
-  sportPillTextSelected: {
-    color: "#000",
-  },
-
-  // Stats Grid
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  statBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    width: "48%",
-    backgroundColor: "rgba(255,255,255,0.03)",
-    padding: 12,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
-  },
-  statBoxSelected: {
-    backgroundColor: "rgba(57,255,20,0.05)",
-    borderColor: "rgba(57,255,20,0.3)",
-  },
-  statText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 12,
-    color: "rgba(255,255,255,0.5)",
-    flex: 1,
-  },
-  statTextSelected: {
-    color: "#39FF14",
-    fontFamily: "Inter_700Bold",
-  },
-
-  // Finances
-  financeRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  financeDivider: {
-    width: 1,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    marginHorizontal: 5,
-  },
-  moneyInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    borderRadius: 6,
-    paddingHorizontal: 12,
-  },
-  moneyPrefix: {
-    fontFamily: "Inter_900Black",
-    fontSize: 18,
-    color: "#39FF14",
-    marginRight: 5,
-  },
-  moneyInput: {
-    flex: 1,
-    color: "#FFF",
-    fontFamily: "Inter_700Bold",
-    fontSize: 18,
-    paddingVertical: 12,
-  },
-  helpText: {
-    fontFamily: "Inter_500Medium",
-    fontSize: 10,
-    color: "rgba(255,255,255,0.4)",
-    marginTop: 6,
-  },
-
-  // Submit Button
-  submitSection: {
-    marginTop: 20,
-    marginBottom: 40,
-  },
-  submitBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    paddingVertical: 18,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#39FF14",
-    overflow: "hidden",
-  },
-  submitBtnText: {
-    fontFamily: "Inter_900Black",
-    fontSize: 16,
-    color: "#000",
-    letterSpacing: 2,
-    zIndex: 1,
-  }
+  root: { flex: 1, backgroundColor: "#050505" },
+  header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20, paddingBottom: 14 },
+  backBtn: { width: 42, height: 42, borderRadius: 13, backgroundColor: "rgba(255,255,255,0.08)", alignItems: "center", justifyContent: "center" },
+  headerEyebrow: { color: "#39FF14", fontFamily: "Inter_800ExtraBold", fontSize: 8, letterSpacing: 1.6 },
+  headerTitle: { color: "#FFF", fontFamily: "Inter_900Black", fontSize: 20, letterSpacing: 1 },
+  stepText: { color: "rgba(255,255,255,0.45)", fontFamily: "Inter_900Black", fontSize: 13 },
+  content: { paddingHorizontal: 20, paddingBottom: 120 },
+  progressWrap: { flexDirection: "row", gap: 8, marginBottom: 18 },
+  progressItem: { flex: 1, height: 4, borderRadius: 4, backgroundColor: "rgba(255,255,255,0.12)" },
+  section: { gap: 14 },
+  sectionTitle: { color: "#FFF", fontFamily: "Inter_900Black", fontSize: 22, letterSpacing: -0.6 },
+  row: { flexDirection: "row", gap: 12 },
+  field: { gap: 8 },
+  label: { color: "rgba(255,255,255,0.52)", fontFamily: "Inter_800ExtraBold", fontSize: 10, letterSpacing: 1, textTransform: "uppercase" },
+  input: { borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.055)", paddingHorizontal: 14, paddingVertical: 13, color: "#FFF", fontFamily: "Inter_600SemiBold", fontSize: 15 },
+  textArea: { minHeight: 86, textAlignVertical: "top" },
+  pillRow: { gap: 10 },
+  pill: { flexDirection: "row", alignItems: "center", gap: 7, borderRadius: 22, borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", backgroundColor: "rgba(255,255,255,0.05)", paddingHorizontal: 14, paddingVertical: 10 },
+  pillActive: { backgroundColor: "#39FF14", borderColor: "#39FF14" },
+  pillText: { color: "#FFF", fontFamily: "Inter_800ExtraBold", fontSize: 12 },
+  pillTextActive: { color: "#050505" },
+  uploadRow: { flexDirection: "row", gap: 10 },
+  uploadBtn: { flex: 1, minHeight: 78, borderRadius: 16, borderWidth: 1, borderStyle: "dashed", borderColor: "rgba(57,255,20,0.45)", backgroundColor: "rgba(57,255,20,0.06)", alignItems: "center", justifyContent: "center", gap: 8 },
+  uploadText: { color: "rgba(255,255,255,0.72)", fontFamily: "Inter_700Bold", fontSize: 11 },
+  colorRow: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  color: { width: 38, height: 38, borderRadius: 19, borderWidth: 2, borderColor: "rgba(255,255,255,0.08)" },
+  colorActive: { borderColor: "#FFF", transform: [{ scale: 1.12 }] },
+  help: { color: "rgba(255,255,255,0.5)", fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 19 },
+  footer: { position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", gap: 10, paddingHorizontal: 20, paddingTop: 12, backgroundColor: "rgba(5,5,5,0.94)", borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)" },
+  secondaryBtn: { width: 104, borderRadius: 15, borderWidth: 1, borderColor: "rgba(255,255,255,0.13)", alignItems: "center", justifyContent: "center" },
+  secondaryText: { color: "#FFF", fontFamily: "Inter_900Black", fontSize: 11, letterSpacing: 1 },
+  primaryBtn: { flex: 1, minHeight: 50, borderRadius: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  primaryText: { color: "#050505", fontFamily: "Inter_900Black", fontSize: 12, letterSpacing: 1 },
 });
